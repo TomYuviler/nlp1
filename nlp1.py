@@ -45,6 +45,8 @@ This is done at pre-training step.
 import numpy as np
 import math
 import re
+
+
 def split(x):
   return(re.split(' |\n',x))
 def split1(x):
@@ -409,7 +411,7 @@ class history_feature_class():
                 self.word_features_list.append((word,ctag,represent_input_with_features(history,self.feature2id)))
                 word_featurs_per_tag = []
                 for tag in self.tags_list:
-                  history=(word,tag,ptag,tag,pword,nword,pptag)
+                  history=(word,ptag,ntag,tag,pword,nword,pptag)
                   word_featurs_per_tag.append(represent_input_with_features(history,self.feature2id))
                 self.word_tags_features_list.append((word,word_featurs_per_tag))  
 
@@ -615,7 +617,7 @@ args4=len(args1)
 args5=feature2id.n_total_features
 args3=len(tags_list)
 args=(args1,args2,args3,args4,args5)
-# define 'args', that holds the arguments arg_1, arg_2, ... for 'calc_objective_per_iter' 
+# define 'args', that holds the arguments arg_1, arg_2, ... for 'calc_objective_per_iter'
 #args = (arg_1, arg_2, ...)
 w_0 = np.zeros(feature2id.n_total_features, dtype=np.float32)
 optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=w_0, args=args, maxiter=1000, iprint=1)
@@ -654,7 +656,7 @@ def memm_viterbi():
     You can implement Beam Search to improve runtime
     Implement q efficiently (refer to conditional probability definition in MEMM slides)
     """
-    
+
     return tags_infer
 
 from IPython.display import HTML
