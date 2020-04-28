@@ -45,35 +45,44 @@ This is done at pre-training step.
 import numpy as np
 import math
 import re
+from collections import OrderedDict
 
-#split line to list of word_tag
-def split(x):
-  return(re.split(' |\n',x))
 
-#split split word_tag to list of word,tag
-def split1(x):
-  return (re.split('_',x))
+# split line to list of word_tag
+def split_line(line):
+    return(re.split(' |\n',line))
+
+# split split word_tag to list of word,tag
+def split_word_tag(word_tag):
+    return (re.split('_',word_tag))
+
 
 def get_tags_list(file_path):
-  tags_list=[]
-  with open('/content/test1.wtag') as f:
-    for line in f:
-      splited_words = split(line)
-      del splited_words[-1]
-      for word_idx in range(len(splited_words)):
-        cur_word, cur_tag = split1(splited_words[word_idx])
-        tags_list.append(cur_tag)
-    
-  return set(tags_list)
+    """
+        Extract out of text tags
+        :param file_path: full path of the file to read
+            return a list of all possible tags
+    """
+    tags_list=[]
+    with open('test1.wtag') as f:
+        for line in f:
+            splited_words = split_line(line)
+            del splited_words[-1]
+            for word_idx in range(len(splited_words)):
+                cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                tags_list.append(cur_tag)
+    return list(set(tags_list))
 
-from collections import OrderedDict
 
 class feature_statistics_class():
 
-    def __init__(self):
+    def __init__(self,file_path):
         self.n_total_features = 0  # Total number of features accumulated
 
+        self.file_path = file_path
+
         # Init all features dictionaries
+        # key: feature; value: number of appearances
         self.words_tags_count_dict = OrderedDict()
         self.spelling_prefix_count_dict = OrderedDict()
         self.spelling_suffix_count_dict = OrderedDict()
@@ -85,129 +94,121 @@ class feature_statistics_class():
         # ---Add more count dictionaries here---
         
 
-    def get_word_tag_pair_count(self, file_path):
+    def get_word_tag_pair_count(self):
         """
             Extract out of text all word/tag pairs
-            :param file_path: full path of the file to read
                 return all word/tag pairs with index of appearance
         """
-        with open(file_path) as f:
-          for line in f:
-              splited_words = split(line)
-              del splited_words[-1]
-              for word_idx in range(len(splited_words)):
-                  cur_word, cur_tag = split1(splited_words[word_idx])
-                  if (cur_word, cur_tag) not in self.words_tags_count_dict:
-                      self.words_tags_count_dict[(cur_word, cur_tag)] = 1
-                  else:
-                      self.words_tags_count_dict[(cur_word, cur_tag)] += 1
+        with open(self.file_path) as f:
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                for word_idx in range(len(splited_words)):
+                    cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                    if (cur_word, cur_tag) not in self.words_tags_count_dict:
+                        self.words_tags_count_dict[(cur_word, cur_tag)] = 1
+                    else:
+                        self.words_tags_count_dict[(cur_word, cur_tag)] += 1
       
-    def get_spelling_prefix_count(self, file_path):
+    def get_spelling_prefix_count(self):
         """
-            Extract out of text all word/tag pairs
-            :param file_path: full path of the file to read
-                return all word/tag pairs with index of appearance
+            Extract out of text all prefix/tag pairs
+                return all prefix/tag pairs with index of appearance
         """
-        with open(file_path) as f:
-          for line in f:
-              splited_words = split(line)
-              del splited_words[-1]
-              for word_idx in range(len(splited_words)):
-                  cur_word, cur_tag = split1(splited_words[word_idx])
-                  length=len(cur_word)
-                  for i in range (min(4,length)):
-                    if (cur_word[:i+1], cur_tag) not in self.spelling_prefix_count_dict:
-                      self.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] = 1
-                    else:
-                      self.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] += 1         
+        with open(self.file_path) as f:
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                for word_idx in range(len(splited_words)):
+                    cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                    length=len(cur_word)
+                    for i in range (min(4,length)):
+                        if (cur_word[:i+1], cur_tag) not in self.spelling_prefix_count_dict:
+                            self.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] = 1
+                        else:
+                            self.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] += 1
                                         
-    def get_spelling_suffix_count(self, file_path):
+    def get_spelling_suffix_count(self):
         """
-            Extract out of text all word/tag pairs
-            :param file_path: full path of the file to read
-                return all word/tag pairs with index of appearance
+            Extract out of text all suffix/tag pairs
+                return all suffix/tag pairs with index of appearance
         """
-        with open(file_path) as f:
-          for line in f:
-              splited_words = split(line)
-              del splited_words[-1]
-              for word_idx in range(len(splited_words)):
-                  cur_word, cur_tag = split1(splited_words[word_idx])
-                  length=len(cur_word)
-                  for i in range (min(4,length)):
-                    if (cur_word[-i-1:], cur_tag) not in self.spelling_suffix_count_dict:
-                      self.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] = 1
+        with open(self.file_path) as f:
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                for word_idx in range(len(splited_words)):
+                    cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                    length=len(cur_word)
+                    for i in range (min(4,length)):
+                        if (cur_word[-i-1:], cur_tag) not in self.spelling_suffix_count_dict:
+                            self.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] = 1
+                        else:
+                            self.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] += 1
+
+    def get_trigram_tags_count(self):
+        """
+            Extract out of text all trigrams tags
+                return all trigrams tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                for word_idx in range(len(splited_words)):
+                    cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                    if word_idx>1:
+                        ptag =  split_word_tag(splited_words[word_idx-1])[1]
+                        pptag =  split_word_tag(splited_words[word_idx-2])[1]
+                    elif word_idx == 1:
+                        ptag =  split_word_tag(splited_words[word_idx-1])[1]
+                        pptag = '*'
                     else:
-                      self.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] += 1  
+                        ptag = '*'
+                        pptag = '*'
+                    if (pptag,ptag,cur_tag) not in self.trigram_tags_count_dict:
+                        self.trigram_tags_count_dict[(pptag,ptag,cur_tag)] = 1
+                    else:
+                        self.trigram_tags_count_dict[(pptag,ptag,cur_tag)] += 1
 
-    def get_trigram_tags_count(self, file_path):
+    def get_bigram_tags_count(self):
         """
-            Extract out of text all word/tag pairs
-            :param file_path: full path of the file to read
-                return all word/tag pairs with index of appearance
+            Extract out of text all bigram tags
+                return all bigram tags with index of appearance
         """
-        with open(file_path) as f:
-          for line in f:
-              splited_words = split(line)
-              del splited_words[-1]
-              for word_idx in range(len(splited_words)):
-                  cur_word, cur_tag = split1(splited_words[word_idx]) 
-                  if word_idx>1:
-                    ptag =  split1(splited_words[word_idx-1])[1]
-                    pptag =  split1(splited_words[word_idx-2])[1]
-                  elif word_idx == 1:
-                    ptag =  split1(splited_words[word_idx-1])[1]
-                    pptag = '*'
-                  else:    
-                    ptag = '*'
-                    pptag = '*'
-                  if (pptag,ptag,cur_tag) not in self.trigram_tags_count_dict:
-                    self.trigram_tags_count_dict[(pptag,ptag,cur_tag)] = 1
-                  else:
-                    self.trigram_tags_count_dict[(pptag,ptag,cur_tag)] += 1
+        with open(self.file_path) as f:
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                for word_idx in range(len(splited_words)):
+                    cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                    if word_idx>0:
+                        ptag =  split_word_tag(splited_words[word_idx-1])[1]
+                    else:
+                        ptag = '*'
+                    if (ptag,cur_tag) not in self.bigram_tags_count_dict:
+                        self.bigram_tags_count_dict[(ptag,cur_tag)] = 1
+                    else:
+                        self.bigram_tags_count_dict[(ptag,cur_tag)] += 1
 
-    def get_bigram_tags_count(self, file_path):
+    def get_unigram_tags_count(self):
         """
-            Extract out of text all word/tag pairs
-            :param file_path: full path of the file to read
-                return all word/tag pairs with index of appearance
+            Extract out of text all tags
+                return all tags with index of appearance
         """
-        with open(file_path) as f:
-          for line in f:
-              splited_words = split(line)
-              del splited_words[-1]
-              for word_idx in range(len(splited_words)):
-                  cur_word, cur_tag = split1(splited_words[word_idx]) 
-                  if word_idx>0:
-                    ptag =  split1(splited_words[word_idx-1])[1]
-                  else:    
-                    ptag = '*'
-                  if (ptag,cur_tag) not in self.bigram_tags_count_dict:
-                    self.bigram_tags_count_dict[(ptag,cur_tag)] = 1
-                  else:
-                    self.bigram_tags_count_dict[(ptag,cur_tag)] += 1 
-
-    def get_unigram_tags_count(self, file_path):
-        """
-            Extract out of text all word/tag pairs
-            :param file_path: full path of the file to read
-                return all word/tag pairs with index of appearance
-        """
-        with open(file_path) as f:
-          for line in f:
-              splited_words = split(line)
-              del splited_words[-1]
-              for word_idx in range(len(splited_words)):
-                  cur_word, cur_tag = split1(splited_words[word_idx]) 
-                  if (cur_tag) not in self.unigram_tags_count_dict:
-                    self.unigram_tags_count_dict[(cur_tag)] = 1
-                  else:
-                    self.unigram_tags_count_dict[(cur_tag)] += 1 
+        with open(self.file_path) as f:
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                for word_idx in range(len(splited_words)):
+                    cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                    if (cur_tag) not in self.unigram_tags_count_dict:
+                        self.unigram_tags_count_dict[(cur_tag)] = 1
+                    else:
+                        self.unigram_tags_count_dict[(cur_tag)] += 1
 
     # --- ADD YOURE CODE BELOW --- #
 
-word='yuviler'
-print(word[-3-1:])
 
 """### Indexing features 
 After getting feature statistics, each feature is given an index to represent it. We include only features that appear more times in text than the lower bound - 'threshold'
@@ -215,9 +216,10 @@ After getting feature statistics, each feature is given an index to represent it
 
 class feature2id_class():
 
-    def __init__(self, feature_statistics, threshold):
+    def __init__(self, feature_statistics, threshold, file_path):
         self.feature_statistics = feature_statistics  # statistics class, for each featue gives empirical counts
         self.threshold = threshold                    # feature count threshold - empirical count must be higher than this
+        self.file_path = file_path
 
         self.n_total_features = 0                     # Total number of features accumulated
         self.n_tag_pairs = 0                          # Number of Word\Tag pairs features
@@ -236,130 +238,130 @@ class feature2id_class():
         self.unigram_tags_dict = OrderedDict()
 
 
-    def get_word_tag_pairs(self, file_path):
+    def get_word_tag_pairs(self):
         """
             Extract out of text all word/tag pairs
             :param file_path: full path of the file to read
                 return all word/tag pairs with index of appearance
         """
-        with open(file_path) as f:
-          for line in f:
-            splited_words = split(line)
-            del splited_words[-1]
-            for word_idx in range(len(splited_words)):
-                cur_word, cur_tag = split1(splited_words[word_idx])
-                if ((cur_word, cur_tag) not in self.words_tags_dict) \
+        with open(self.file_path) as f:
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                for word_idx in range(len(splited_words)):
+                    cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                    if ((cur_word, cur_tag) not in self.words_tags_dict) \
                         and (self.feature_statistics.words_tags_count_dict[(cur_word, cur_tag)] >= self.threshold):
-                    self.words_tags_dict[(cur_word, cur_tag)] = self.n_tag_pairs
-                    self.n_tag_pairs += 1    
+                        self.words_tags_dict[(cur_word, cur_tag)] = self.n_tag_pairs
+                        self.n_tag_pairs += 1
         self.n_total_features += self.n_tag_pairs
         
 
-    def get_prefix_tag_pairs(self, file_path):
+    def get_prefix_tag_pairs(self):
         """
             Extract out of text all word/tag pairs
             :param file_path: full path of the file to read
                 return all word/tag pairs with index of appearance
         """
-        with open(file_path) as f:
-          for line in f:
-            splited_words = split(line)
-            del splited_words[-1]
-            for word_idx in range(len(splited_words)):
-                cur_word, cur_tag = split1(splited_words[word_idx])
-                length = len(cur_word)
-                for i in range (min(4,length)):
-                  if ((cur_word[:i+1], cur_tag) not in self.prefix_tag_dict) \
+        with open(self.file_path) as f:
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                for word_idx in range(len(splited_words)):
+                    cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                    length = len(cur_word)
+                    for i in range (min(4,length)):
+                        if ((cur_word[:i+1], cur_tag) not in self.prefix_tag_dict) \
                         and (self.feature_statistics.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] >= self.threshold):
-                    self.prefix_tag_dict[(cur_word[:i+1], cur_tag)] = self.n_total_features + self.n_prefix_tag
-                    self.n_prefix_tag += 1
+                            self.prefix_tag_dict[(cur_word[:i+1], cur_tag)] = self.n_total_features + self.n_prefix_tag
+                            self.n_prefix_tag += 1
         self.n_total_features = self.n_total_features + self.n_prefix_tag    
 
-    def get_suffix_tag_pairs(self, file_path):
+    def get_suffix_tag_pairs(self):
         """
             Extract out of text all word/tag pairs
             :param file_path: full path of the file to read
                 return all word/tag pairs with index of appearance
         """
-        with open(file_path) as f:
-          for line in f:
-            splited_words = split(line)
-            del splited_words[-1]
-            for word_idx in range(len(splited_words)):
-                cur_word, cur_tag = split1(splited_words[word_idx])
-                length = len(cur_word)
-                for i in range (min(4,length)):
-                  if ((cur_word[-i-1:], cur_tag) not in self.suffix_tag_dict) \
+        with open(self.file_path) as f:
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                for word_idx in range(len(splited_words)):
+                    cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                    length = len(cur_word)
+                    for i in range (min(4,length)):
+                        if ((cur_word[-i-1:], cur_tag) not in self.suffix_tag_dict) \
                         and (self.feature_statistics.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] >= self.threshold):
-                    self.suffix_tag_dict[(cur_word[-i-1:], cur_tag)] = self.n_total_features + self.n_suffix_tag
-                    self.n_suffix_tag += 1      
+                            self.suffix_tag_dict[(cur_word[-i-1:], cur_tag)] = self.n_total_features + self.n_suffix_tag
+                            self.n_suffix_tag += 1
         self.n_total_features = self.n_total_features + self.n_suffix_tag       
 
 
-    def get_trigram_tags_pairs(self, file_path):
+    def get_trigram_tags_pairs(self):
         """
             Extract out of text all word/tag pairs
             :param file_path: full path of the file to read
                 return all word/tag pairs with index of appearance
         """
-        with open(file_path) as f:
-          for line in f:
-            splited_words = split(line)
-            del splited_words[-1]
-            for word_idx in range(len(splited_words)):
-                  cur_word, cur_tag = split1(splited_words[word_idx]) 
-                  if word_idx>1:
-                    ptag =  split1(splited_words[word_idx-1])[1]
-                    pptag =  split1(splited_words[word_idx-2])[1]
-                  elif word_idx == 1:
-                    ptag =  split1(splited_words[word_idx-1])[1]
-                    pptag = '*'
-                  else:    
-                    ptag = '*'
-                    pptag = '*'
-                  if ((pptag,ptag,cur_tag) not in self.trigram_tags_dict) \
+        with open(self.file_path) as f:
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                for word_idx in range(len(splited_words)):
+                    cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                    if word_idx>1:
+                        ptag =  split_word_tag(splited_words[word_idx-1])[1]
+                        pptag =  split_word_tag(splited_words[word_idx-2])[1]
+                    elif word_idx == 1:
+                        ptag =  split_word_tag(splited_words[word_idx-1])[1]
+                        pptag = '*'
+                    else:
+                        ptag = '*'
+                        pptag = '*'
+                    if ((pptag,ptag,cur_tag) not in self.trigram_tags_dict) \
                         and (self.feature_statistics.trigram_tags_count_dict[(pptag,ptag,cur_tag)] >= self.threshold):
-                    self.trigram_tags_dict[(pptag,ptag,cur_tag)] = self.n_total_features + self.n_trigram_tags
-                    self.n_trigram_tags += 1
+                        self.trigram_tags_dict[(pptag,ptag,cur_tag)] = self.n_total_features + self.n_trigram_tags
+                        self.n_trigram_tags += 1
         self.n_total_features = self.n_total_features + self.n_trigram_tags
 
 
 
-    def get_bigram_tags_pairs(self, file_path):
+    def get_bigram_tags_pairs(self):
         """
             Extract out of text all word/tag pairs
             :param file_path: full path of the file to read
                 return all word/tag pairs with index of appearance
         """
-        with open(file_path) as f:
-          for line in f:
-            splited_words = split(line)
-            del splited_words[-1]
-            for word_idx in range(len(splited_words)):
-                  cur_word, cur_tag = split1(splited_words[word_idx]) 
-                  if word_idx>0:
-                    ptag =  split1(splited_words[word_idx-1])[1]
-                  else:    
-                    ptag = '*'
-                  if ((ptag,cur_tag) not in self.bigram_tags_dict) \
+        with open(self.file_path) as f:
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                for word_idx in range(len(splited_words)):
+                    cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                    if word_idx>0:
+                        ptag =  split_word_tag(splited_words[word_idx-1])[1]
+                    else:
+                        ptag = '*'
+                    if ((ptag,cur_tag) not in self.bigram_tags_dict) \
                         and (self.feature_statistics.bigram_tags_count_dict[(ptag,cur_tag)] >= self.threshold):
-                    self.bigram_tags_dict[(ptag,cur_tag)] = self.n_total_features + self.n_bigram_tags
-                    self.n_bigram_tags += 1
+                        self.bigram_tags_dict[(ptag,cur_tag)] = self.n_total_features + self.n_bigram_tags
+                        self.n_bigram_tags += 1
         self.n_total_features = self.n_total_features + self.n_bigram_tags
 
 
-    def get_unigram_tags_pairs(self, file_path):
+    def get_unigram_tags_pairs(self):
         """
             Extract out of text all word/tag pairs
             :param file_path: full path of the file to read
                 return all word/tag pairs with index of appearance
         """
-        with open(file_path) as f:
+        with open(self.file_path) as f:
           for line in f:
-            splited_words = split(line)
+            splited_words = split_line(line)
             del splited_words[-1]
             for word_idx in range(len(splited_words)):
-                  cur_word, cur_tag = split1(splited_words[word_idx]) 
+                  cur_word, cur_tag = split_word_tag(splited_words[word_idx])
                   if ((cur_tag) not in self.unigram_tags_dict) \
                         and (self.feature_statistics.unigram_tags_count_dict[(cur_tag)] >= self.threshold):
                     self.unigram_tags_dict[(cur_tag)] = self.n_total_features + self.n_unigram_tags
@@ -388,7 +390,7 @@ class history_feature_class():
         """
         with open(file_path) as f:
           for line in f:
-            splited_words = split(line)
+            splited_words = split_line(line)
             del splited_words[-1]
             pptag='*'
             ptag='*'
@@ -396,19 +398,19 @@ class history_feature_class():
             length=len(splited_words)
             for word_idx in range(length):
                 if word_idx>1: 
-                  ptag= split1(splited_words[word_idx-1])[1]
-                  pword=split1(splited_words[word_idx-1])[0]
-                  pptag= split1(splited_words[word_idx-2])[1]
+                  ptag= split_word_tag(splited_words[word_idx-1])[1]
+                  pword=split_word_tag(splited_words[word_idx-1])[0]
+                  pptag= split_word_tag(splited_words[word_idx-2])[1]
                 elif word_idx==1:
-                  ptag= split1(splited_words[word_idx-1])[1]
-                  pword=split1(splited_words[word_idx-1])[0]
-                word, ctag = split1(splited_words[word_idx])
+                  ptag= split_word_tag(splited_words[word_idx-1])[1]
+                  pword=split_word_tag(splited_words[word_idx-1])[0]
+                word, ctag = split_word_tag(splited_words[word_idx])
                 if word_idx == length-1:
                   ntag='*'
                   nword='*'
                 else:
-                  ntag= split1(splited_words[word_idx+1])[1]
-                  nword=split1(splited_words[word_idx+1])[0]
+                  ntag= split_word_tag(splited_words[word_idx+1])[1]
+                  nword=split_word_tag(splited_words[word_idx+1])[0]
                 history=(word,ptag,ntag,ctag,pword,nword,pptag)
                 self.word_features_list.append((word,ctag,represent_input_with_features(history,self.feature2id)))
                 word_featurs_per_tag = []
@@ -477,39 +479,7 @@ def represent_input_with_features(history, feature2id):
     
     return features
 
-"""## Part 2 - Optimization
-
-Recall from tutorial that the log-linear objective is: \
-$$(1)\textbf{   } L(v)=\underbrace{\sum_{i=1}^{n} v\cdot f(x_{i},y_{i})}_\text{Linear Term}-\underbrace{\sum_{i=1}^{n}\log(\sum_{y'\in Y} e^{v\cdot f(x_{i},y')})}_\text{Normalization Term} - \underbrace{0.5\cdot\lambda\cdot\|v \|^{2}}_\text{Regularization}$$ 
-Where $v$ represents the model weights, $x_{i}$ is the $i'th$ input token, $y_{i}$ is the $i'th$ label and $Y$ represents all possible labels. \
-The corresponding gradient is:
-$$(2)\textbf{}\frac{\partial L(v)}{\partial v} = \underbrace{\sum_{i=1}^{n} f(x_{i},y_{i})}_\text{Empirical Counts} - \underbrace{\sum_{i=1}^{n}\sum_{y'\in Y} f(x_{i},y') \cdot p(y' | x_{i} ; v)}_\text{Expected Counts} - \underbrace{\lambda\cdot v}_\text{Reg Grad} $$
-
-### How to speed up optimization 
-Gradient descent is an iterative optimization method. The log-linear objective presented in equation (1) is a convex problem, which guaranties a convergence for gradient descent iterations (when choosing an appropriate step size). However, in order to converge, many iterations must be performed. Therefore, it is importent to (1) speed up each iteration and to (2) decrease the number of iterations.
-
-
-#### Decrease the number of iterations 
-Notice that by increasing $\lambda$ we can force the algorithm to search for a solution in a smaller search space - which will reduce the number of iterations. However, this is a tredoff, because it will also damage train-set accuracy (Notice that we don't strive to achieve 100% accuracy on the training set, as sometimes by reducing training accuracy we achieve improvement in developement set accuracy).      
-
-
-#### Decrease iteration duration
-Denote the GD update as:
-$$ (3) \textbf{  } v_{k+1} = v_{k} + d \cdot \frac{\partial L}{\partial v} $$
-where $v_{k}$ is the weight vector at time $k$, $d$ is a constant step size and $L$ is the objective presentend in equation (1).\
-In this excersice we are using `fmin_l_bfgs_b`, which is imported from `scipy.optimize`. This is an iterative optimization function which is similar to GD. The function receives 3 arguments:
- 
-
-1.   **func** - a function that clculates the objective and its gradient each iteration.
-2.   **x0** - initialize values of the model weights.
-3.   **args** - the arguments which 'func' is expecting, except for the first argument - which is the model weights.
-4.   **maxiter** (optional) - specify a hard limit for number of iterations. (int)
-5.   **iprint**  (optional) - specify the print interval (int) 0 < iprint < 99 
-
-
-
-Think of ways to efficiently calculate eqautions (1) and (2) according to your features implementation. Furthermore, think which parts must be computed in each iteration, and whether others can be computed once.
-"""
+### Part 2 - Optimization
 
 def calc_objective_per_iter(w_i, args1,args2,args3,args4,args5):
     """
@@ -527,7 +497,8 @@ def calc_objective_per_iter(w_i, args1,args2,args3,args4,args5):
     for i in range (args4):
       for feature in args1[i][2]:
         linear_term+=w_i[feature]
-      
+
+    print ("tom")
     #normalization term
     num_tags=args3
     normalization_term=0  
@@ -582,18 +553,18 @@ def calc_objective_per_iter(w_i, args1,args2,args3,args4,args5):
     print("like = ",likelihood)
     return (-1)*likelihood, (-1)*grad
 
-"""Now lets run the code untill we get the optimized weights."""
+"""Now lets run the code untill we get the optimized weights"""
 
 from scipy.optimize import fmin_l_bfgs_b
 
 # Statistics
-statistics = feature_statistics_class()
-statistics.get_word_tag_pair_count('/content/train1.wtag')
-statistics.get_spelling_prefix_count('/content/train1.wtag')
-statistics.get_spelling_suffix_count('/content/train1.wtag')
-statistics.get_trigram_tags_count('/content/train1.wtag')
-statistics.get_bigram_tags_count('/content/train1.wtag')
-statistics.get_unigram_tags_count('/content/train1.wtag')
+statistics = feature_statistics_class('train1.wtag')
+statistics.get_word_tag_pair_count()
+statistics.get_spelling_prefix_count()
+statistics.get_spelling_suffix_count()
+statistics.get_trigram_tags_count()
+statistics.get_bigram_tags_count()
+statistics.get_unigram_tags_count()
 
 
 
@@ -601,18 +572,18 @@ statistics.get_unigram_tags_count('/content/train1.wtag')
 # feature2id
 threshold=3
 feature2id = feature2id_class(statistics, threshold)
-feature2id.get_word_tag_pairs('/content/train1.wtag')
-feature2id.get_prefix_tag_pairs('/content/train1.wtag')
-feature2id.get_suffix_tag_pairs('/content/train1.wtag')
-feature2id.get_trigram_tags_pairs('/content/train1.wtag')
-feature2id.get_bigram_tags_pairs('/content/train1.wtag')
-feature2id.get_unigram_tags_pairs('/content/train1.wtag')
+feature2id.get_word_tag_pairs('train1.wtag')
+feature2id.get_prefix_tag_pairs('train1.wtag')
+feature2id.get_suffix_tag_pairs('train1.wtag')
+feature2id.get_trigram_tags_pairs('train1.wtag')
+feature2id.get_bigram_tags_pairs('train1.wtag')
+feature2id.get_unigram_tags_pairs('train1.wtag')
 
 
 
-tags_list=list(get_tags_list('/content/train1.wtag'))
-history_feature=history_feature_class(feature2id,'/content/train1.wtag',tags_list)
-history_feature.get_history('/content/train1.wtag')
+tags_list=list(get_tags_list('train1.wtag'))
+history_feature=history_feature_class(feature2id,'train1.wtag',tags_list)
+history_feature.get_history('train1.wtag')
 args1=history_feature.word_features_list
 args2=history_feature.word_tags_features_list
 args4=len(args1)
@@ -638,72 +609,3 @@ with open(weights_path, 'wb') as f:
 # pre_trained_weights = optimal_params[0]                             #
 #                                                                     #
 #######################################################################
-
-"""## Part 3 - Inference with MEMM-Viterbi
-Recall - the MEMM-Viterbi takes the form of:
-\begin{align*}
-\textbf{Base case: }~~~~~~ &                       \\
-                           & \pi(0, *, *)=1        \\
-                                                      &                       \\
-\textbf{The recursive}     & \textbf{ definition:} \\
-                           & \text{For any } k\in\{1,..., n\} ,\text{for any } u \in S_{k-1} \text{ and } v \in S_{k}:\\
-                           & ~~~~~~~~~~~~~~~\pi(k, u, v)=\max_{t\in S_{k-2}}{\{\pi(k-1, t, u)\cdot q(v|t, u, w_{[1:n]}, k)\}}\\
-\end{align*}
-where $S_{k}$ is a set of possible tags at position $k$.
-"""
-
-def memm_viterbi():
-    """
-    Write your MEMM Vitebi imlementation below
-    You can implement Beam Search to improve runtime
-    Implement q efficiently (refer to conditional probability definition in MEMM slides)
-    """
-
-    return tags_infer
-
-from IPython.display import HTML
-from base64 import b64encode
-! git clone https://github.com/eyalbd2/097215_Natural-Language-Processing_Workshop-Notebooks.git
-
-mp4 = open('/content/097215_Natural-Language-Processing_Workshop-Notebooks/ViterbiSimulation.mp4','rb').read()
-data_url = "data:video/mp4;base64," + b64encode(mp4).decode()
-
-HTML("""
-<video width=1000 controls>
-      <source src="%s" type="video/mp4">
-</video>
-""" % data_url)
-
-"""Notation:
-  - *w* refers to the trained weights vector
-  - *u* refers to the previous tag
-  - *v* refers to the current tag
-  - *t* refers to the tag previous to *u*
-
-The video above presents a vanilla memm viterbi. \
-There are several methods to improve the performence of the algorithm, we will specify two of them: 
-
-
-1.   Dividing the algorithm to multiple processes 
-2.   Implementing beam search viterbi, and reducing Beam size 
-
-
-Notice that the latter might affect the results, hence beam size is required to be chosen wisely.
-
-## Accuracy and Confusion Matrix
-![Accuracy and Confusion Matrix](https://raw.githubusercontent.com/eyalbd2/097215_Natural-Language-Processing_Workshop-Notebooks/master/conf_mat_slide.PNG)
-
-## Interface for creating competition files
-In your submission, you must implement a python file named `generate_comp_tagged.py` which generates your tagged competition files for both datasets in a single call.
-It should do the following for each dataset:
-
-1. Load trained weights to your model
-2. Load competition data file
-3. Run inference on competition data file
-4. Write results to file according to .wtag format (described in HW1)
-5. Validate your results file comply with .wtag format (according to instructions described in HW1)
-
-## <img src="https://img.icons8.com/dusk/64/000000/prize.png" style="height:50px;display:inline"> Credits
-* Special thanks to <a href="mailto:taldanielm@campus.technion.ac.il">Tal Daniel</a> , specifically for his viterbi implementation
-* By <a href="https://github.com/eyalbd2">Eyal Ben David</a> and <a href="https://github.com/nadavo">Nadav Oved </a>
-"""
