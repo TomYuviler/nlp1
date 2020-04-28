@@ -585,7 +585,7 @@ word_tags_features_list = word_features.word_tags_features_list #args2
 num_words = len(args1) #args4
 num_total_features = feature2id.n_total_features #args5
 num_tags = len(tags_list) #args3
-lamda = 1
+lamda = 100
 args =(word_features_list,word_tags_features_list,num_tags,num_words,num_total_features, lamda)
 w_0 = np.zeros(feature2id.n_total_features, dtype=np.float32)
 optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=w_0, args=args, maxiter=1000, iprint=1)
