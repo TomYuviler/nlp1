@@ -46,6 +46,8 @@ import numpy as np
 import math
 import re
 from collections import OrderedDict
+from scipy.optimize import fmin_l_bfgs_b
+
 
 
 # split line to list of word_tag
@@ -259,9 +261,8 @@ class feature2id_class():
 
     def get_prefix_tag_pairs(self):
         """
-            Extract out of text all word/tag pairs
-            :param file_path: full path of the file to read
-                return all word/tag pairs with index of appearance
+            Extract out of text all prefix/tag pairs
+                return all prefix/tag pairs with index of appearance
         """
         with open(self.file_path) as f:
             for line in f:
@@ -279,9 +280,8 @@ class feature2id_class():
 
     def get_suffix_tag_pairs(self):
         """
-            Extract out of text all word/tag pairs
-            :param file_path: full path of the file to read
-                return all word/tag pairs with index of appearance
+            Extract out of text all suffix/tag pairs
+                return all suffix/tag pairs with index of appearance
         """
         with open(self.file_path) as f:
             for line in f:
@@ -300,9 +300,8 @@ class feature2id_class():
 
     def get_trigram_tags_pairs(self):
         """
-            Extract out of text all word/tag pairs
-            :param file_path: full path of the file to read
-                return all word/tag pairs with index of appearance
+            Extract out of text all trigram tags
+                return all trigram tags with index of appearance
         """
         with open(self.file_path) as f:
             for line in f:
@@ -329,9 +328,8 @@ class feature2id_class():
 
     def get_bigram_tags_pairs(self):
         """
-            Extract out of text all word/tag pairs
-            :param file_path: full path of the file to read
-                return all word/tag pairs with index of appearance
+            Extract out of text all bigram tags
+                return all bigram tags with index of appearance
         """
         with open(self.file_path) as f:
             for line in f:
@@ -352,75 +350,24 @@ class feature2id_class():
 
     def get_unigram_tags_pairs(self):
         """
-            Extract out of text all word/tag pairs
-            :param file_path: full path of the file to read
-                return all word/tag pairs with index of appearance
+            Extract out of text all tags
+                return all tags with index of appearance
         """
         with open(self.file_path) as f:
-          for line in f:
-            splited_words = split_line(line)
-            del splited_words[-1]
-            for word_idx in range(len(splited_words)):
-                  cur_word, cur_tag = split_word_tag(splited_words[word_idx])
-                  if ((cur_tag) not in self.unigram_tags_dict) \
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                for word_idx in range(len(splited_words)):
+                    cur_word, cur_tag = split_word_tag(splited_words[word_idx])
+                    if ((cur_tag) not in self.unigram_tags_dict) \
                         and (self.feature_statistics.unigram_tags_count_dict[(cur_tag)] >= self.threshold):
-                    self.unigram_tags_dict[(cur_tag)] = self.n_total_features + self.n_unigram_tags
-                    self.n_unigram_tags += 1
+                        self.unigram_tags_dict[(cur_tag)] = self.n_total_features + self.n_unigram_tags
+                        self.n_unigram_tags += 1
         self.n_total_features = self.n_total_features + self.n_unigram_tags
 
 
     # --- ADD YOURE CODE BELOW --- #
 
-class history_feature_class():
-
-    def __init__(self, feature2id, file_path,tags_list):
-        #self.word_tags_dict = feature2id.word_tags_dict
-        #self.prefix_tag_dict = feature2id.prefix_tag_dict
-        self.feature2id = feature2id
-        self.word_features_list=[]
-        self.word_tags_features_list=[]
-        self.tags_list = tags_list
-
-
-    def get_history(self, file_path):
-        """
-            Extract out of text all word/tag pairs
-            :param file_path: full path of the file to read
-                return all word/tag pairs with index of appearance
-        """
-        with open(file_path) as f:
-          for line in f:
-            splited_words = split_line(line)
-            del splited_words[-1]
-            pptag='*'
-            ptag='*'
-            pword='*'
-            length=len(splited_words)
-            for word_idx in range(length):
-                if word_idx>1: 
-                  ptag= split_word_tag(splited_words[word_idx-1])[1]
-                  pword=split_word_tag(splited_words[word_idx-1])[0]
-                  pptag= split_word_tag(splited_words[word_idx-2])[1]
-                elif word_idx==1:
-                  ptag= split_word_tag(splited_words[word_idx-1])[1]
-                  pword=split_word_tag(splited_words[word_idx-1])[0]
-                word, ctag = split_word_tag(splited_words[word_idx])
-                if word_idx == length-1:
-                  ntag='*'
-                  nword='*'
-                else:
-                  ntag= split_word_tag(splited_words[word_idx+1])[1]
-                  nword=split_word_tag(splited_words[word_idx+1])[0]
-                history=(word,ptag,ntag,ctag,pword,nword,pptag)
-                self.word_features_list.append((word,ctag,represent_input_with_features(history,self.feature2id)))
-                word_featurs_per_tag = []
-                for tag in self.tags_list:
-                  history=(word,ptag,ntag,tag,pword,nword,pptag)
-                  word_featurs_per_tag.append(represent_input_with_features(history,self.feature2id))
-                self.word_tags_features_list.append((word,word_featurs_per_tag))  
-
-
-    # --- ADD YOURE CODE BELOW --- #
 
 """### Representing input data with features 
 After deciding which features to use, we can represent input tokens as sparse feature vectors. This way, a token is represented with a vec with a dimension D, where D is the total amount of features. \
@@ -432,10 +379,11 @@ We define a tuple which hold all relevant knowledge about the current word, i.e.
 $$History = (W_{cur}, T_{prev}, T_{next}, T_{cur}, W_{prev}, W_{next}) $$
 """
 
+
 def represent_input_with_features(history, feature2id):
     """
         Extract feature vector in per a given history
-        :param history: touple{word, pptag, ptag, ctag, nword, pword}
+        :param history: touple{word, pptag, ptag, ctag, nword, pword, pptag}
         :param word_tags_dict: word\tag dict
             Return a list with all features that are relevant to the given history
     """
@@ -448,40 +396,92 @@ def represent_input_with_features(history, feature2id):
     pptag = history[6]
     features = []
 
-#word-tag
-
+    # word-tag
     if (word, ctag) in feature2id.words_tags_dict:
         features.append(feature2id.words_tags_dict[(word, ctag)])
 
-#prefix-tag
-    for i in range (min(4,len(word))): 
-      if (word[:i+1], ctag) in feature2id.prefix_tag_dict:
-        features.append(feature2id.prefix_tag_dict[(word[:i+1], ctag)])
-        
-#suffix-tag
-    for i in range (min(4,len(word))): 
-      if (word[-i-1:], ctag) in feature2id.suffix_tag_dict:
-        features.append(feature2id.suffix_tag_dict[(word[-i-1:], ctag)])
+    # prefix-tag
+    for i in range(min(4, len(word))):
+        if (word[:i + 1], ctag) in feature2id.prefix_tag_dict:
+            features.append(feature2id.prefix_tag_dict[(word[:i + 1], ctag)])
 
-#trigram tags
-    if (pptag,ptag,ctag) in feature2id.trigram_tags_dict:
-        features.append(feature2id.trigram_tags_dict[(pptag,ptag,ctag)])
+    # suffix-tag
+    for i in range(min(4, len(word))):
+        if (word[-i - 1:], ctag) in feature2id.suffix_tag_dict:
+            features.append(feature2id.suffix_tag_dict[(word[-i - 1:], ctag)])
 
-#bigram tags
-    if (ptag,ctag) in feature2id.bigram_tags_dict:
-        features.append(feature2id.bigram_tags_dict[(ptag,ctag)])   
+    # trigram tags
+    if (pptag, ptag, ctag) in feature2id.trigram_tags_dict:
+        features.append(feature2id.trigram_tags_dict[(pptag, ptag, ctag)])
 
-#bigram tags
+    # bigram tags
+    if (ptag, ctag) in feature2id.bigram_tags_dict:
+        features.append(feature2id.bigram_tags_dict[(ptag, ctag)])
+
+    # unigram tags
     if (ctag) in feature2id.unigram_tags_dict:
-        features.append(feature2id.unigram_tags_dict[(ctag)])      
-    
-    # --- CHECK APEARANCE OF MORE FEATURES BELOW --- #
-    
+        features.append(feature2id.unigram_tags_dict[(ctag)])
+
+        # --- CHECK APEARANCE OF MORE FEATURES BELOW --- #
+
     return features
+
+
+
+"""find for each word in the data the relevant features"""
+class word_feature_class():
+
+    def __init__(self, feature2id, file_path,tags_list):
+        #self.word_tags_dict = feature2id.word_tags_dict
+        #self.prefix_tag_dict = feature2id.prefix_tag_dict
+        self.feature2id = feature2id
+        self.word_features_list = []          #hold for each word in the data the real tag anf the relevant features.
+        self.word_tags_features_list = []     #hold for each word in the data the relevant features for each possible tag
+        self.tags_list = tags_list          #list of all possible tags
+        self.file_path = file_path
+
+    def find_relevant_features(self,):
+        """
+            Extract for each word the relevant features
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                splited_words = split_line(line)
+                del splited_words[-1]
+                pptag = '*'
+                ptag = '*'
+                pword = '*'
+                length=len(splited_words)
+                for word_idx in range(length):
+                    if word_idx > 1:
+                        ptag = split_word_tag(splited_words[word_idx-1])[1]
+                        pword = split_word_tag(splited_words[word_idx-1])[0]
+                        pptag = split_word_tag(splited_words[word_idx-2])[1]
+                    elif word_idx == 1:
+                        ptag = split_word_tag(splited_words[word_idx-1])[1]
+                        pword = split_word_tag(splited_words[word_idx-1])[0]
+                    word, ctag = split_word_tag(splited_words[word_idx])
+                    if word_idx == length-1:
+                        ntag = '*'
+                        nword = '*'
+                    else:
+                        ntag = split_word_tag(splited_words[word_idx+1])[1]
+                        nword = split_word_tag(splited_words[word_idx+1])[0]
+                    history = (word,ptag,ntag,ctag,pword,nword,pptag)
+                    self.word_features_list.append((word,ctag,represent_input_with_features(history,self.feature2id)))
+                    word_features_per_tag = []
+                    for tag in self.tags_list:
+                        history = (word,ptag,ntag,tag,pword,nword,pptag)
+                        word_features_per_tag.append(represent_input_with_features(history,self.feature2id))
+                        self.word_tags_features_list.append((word,word_features_per_tag))
+
+
+    # --- ADD YOURE CODE BELOW --- #
+
 
 ### Part 2 - Optimization
 
-def calc_objective_per_iter(w_i, args1,args2,args3,args4,args5):
+def calc_objective_per_iter(w_i, word_features_list,word_tags_features_list,num_tags,num_words,num_total_features, lamda):
     """
         Calculate max entropy likelihood for an iterative optimization method
         :param w_i: weights vector in iteration i 
@@ -492,58 +492,55 @@ def calc_objective_per_iter(w_i, args1,args2,args3,args4,args5):
 
     ## Calculate the terms required for the likelihood and gradient calculations
     ## Try implementing it as efficient as possible, as this is repeated for each iteration of optimization.
+
     #linear term
     linear_term = 0
-    for i in range (args4):
-      for feature in args1[i][2]:
-        linear_term+=w_i[feature]
+    for i in range (num_words):
+        for feature in word_features_list[i][2]:
+            linear_term += w_i[feature]
 
-    print ("tom")
     #normalization term
-    num_tags=args3
-    normalization_term=0  
-    for i in range (args4):
-      sum_all_tags=0
-      for j in range (num_tags):
-        sum_tag=0
-        for feature in args2[i][1][j]:
-          sum_tag+=w_i[feature]
-        sum_all_tags+=math.exp(sum_tag) 
-      normalization_term+=math.log(sum_all_tags)
+    normalization_term = 0
+    for i in range (num_words):
+        sum_all_tags = 0
+        for j in range (num_tags):
+            sum_tag = 0
+            for feature in word_tags_features_list[i][1][j]:
+                sum_tag += w_i[feature]
+            sum_all_tags += math.exp(sum_tag)
+        normalization_term += math.log(sum_all_tags)
 
     #regularization
-    length=len(w_i)
-    regularization=0
-    for i in range(length):
-      regularization+=w_i[i]**2
-    regularization=0.5*regularization
+    regularization = 0
+    for i in range(num_total_features):
+        regularization += w_i[i]**2
+    regularization = 0.5*regularization*lamda
 
     #empirical counts
-    empirical_counts=np.zeros(args5, dtype=np.float32)
-    for i in range (args4):
-      for feature in args1[i][2]:
-        empirical_counts[feature]+=1
+    empirical_counts = np.zeros(num_total_features, dtype=np.float32)
+    for i in range (num_words):
+        for feature in word_features_list[i][2]:
+            empirical_counts[feature] += 1
 
     #expected counts
-    expected_counts=np.zeros(args5, dtype=np.float32)
-    for i in range (args4):
-      denominator=0
-      for k in range(num_tags):
-        sum_tag=0
-        for feature in args2[i][1][k]:
-          sum_tag+=w_i[feature]
-          
-        denominator+=math.exp(sum_tag)  
-      for j in range(num_tags):
-        sum_tag=0
-        for feature in args2[i][1][j]:
-          sum_tag+=w_i[feature]
-        numerator=math.exp(sum_tag)
-        for feature in args2[i][1][j]:
-          expected_counts[feature]+=numerator/denominator
+    expected_counts = np.zeros(num_total_features, dtype=np.float32)
+    for i in range (num_words):
+        denominator = 0
+        for k in range(num_tags):
+            sum_tag = 0
+            for feature in word_tags_features_list[i][1][k]:
+                sum_tag += w_i[feature]
+        denominator += math.exp(sum_tag)
+        for j in range(num_tags):
+            sum_tag = 0
+            for feature in word_tags_features_list[i][1][j]:
+                sum_tag += w_i[feature]
+            numerator = math.exp(sum_tag)
+            for feature in word_tags_features_list[i][1][j]:
+                expected_counts[feature] += numerator/denominator
 
     #regularization grad
-    regularization_grad=w_i
+    regularization_grad = w_i*lamda
 
 
 
@@ -555,7 +552,6 @@ def calc_objective_per_iter(w_i, args1,args2,args3,args4,args5):
 
 """Now lets run the code untill we get the optimized weights"""
 
-from scipy.optimize import fmin_l_bfgs_b
 
 # Statistics
 statistics = feature_statistics_class('train1.wtag')
@@ -571,27 +567,26 @@ statistics.get_unigram_tags_count()
 
 # feature2id
 threshold=3
-feature2id = feature2id_class(statistics, threshold)
-feature2id.get_word_tag_pairs('train1.wtag')
-feature2id.get_prefix_tag_pairs('train1.wtag')
-feature2id.get_suffix_tag_pairs('train1.wtag')
-feature2id.get_trigram_tags_pairs('train1.wtag')
-feature2id.get_bigram_tags_pairs('train1.wtag')
-feature2id.get_unigram_tags_pairs('train1.wtag')
+feature2id = feature2id_class(statistics, threshold,'train1.wtag')
+feature2id.get_word_tag_pairs()
+feature2id.get_prefix_tag_pairs()
+feature2id.get_suffix_tag_pairs()
+feature2id.get_trigram_tags_pairs()
+feature2id.get_bigram_tags_pairs()
+feature2id.get_unigram_tags_pairs()
 
 
 
-tags_list=list(get_tags_list('train1.wtag'))
-history_feature=history_feature_class(feature2id,'train1.wtag',tags_list)
-history_feature.get_history('train1.wtag')
-args1=history_feature.word_features_list
-args2=history_feature.word_tags_features_list
-args4=len(args1)
-args5=feature2id.n_total_features
-args3=len(tags_list)
-args=(args1,args2,args3,args4,args5)
-# define 'args', that holds the arguments arg_1, arg_2, ... for 'calc_objective_per_iter'
-#args = (arg_1, arg_2, ...)
+tags_list = get_tags_list('train1.wtag')
+word_features = word_feature_class(feature2id,'train1.wtag',tags_list)
+word_features.find_relevant_features()
+word_features_list=word_features.word_features_list #args1
+word_tags_features_list = word_features.word_tags_features_list #args2
+num_words = len(args1) #args4
+num_total_features = feature2id.n_total_features #args5
+num_tags = len(tags_list) #args3
+lamda = 1
+args =(word_features_list,word_tags_features_list,num_tags,num_words,num_total_features, lamda)
 w_0 = np.zeros(feature2id.n_total_features, dtype=np.float32)
 optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=w_0, args=args, maxiter=1000, iprint=1)
 weights = optimal_params[0]
