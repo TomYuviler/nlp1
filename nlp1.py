@@ -46,9 +46,11 @@ import numpy as np
 import math
 import re
 
-
+#split line to list of word_tag
 def split(x):
   return(re.split(' |\n',x))
+
+#split split word_tag to list of word,tag
 def split1(x):
   return (re.split('_',x))
 
