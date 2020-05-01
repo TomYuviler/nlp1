@@ -5,9 +5,11 @@ from collections import OrderedDict
 from scipy.optimize import fmin_l_bfgs_b
 import pickle
 
+
 # split line to list of word_tag
 def split_line(line):
-    return(re.split(' |\n',line))
+    return(re.split(' |\n', line))
+
 
 # split split word_tag to list of word,tag
 def split_word_tag(word_tag):
@@ -322,7 +324,8 @@ class feature2id_class():
 
 
 """### Representing input data with features 
-After deciding which features to use, we can represent input tokens as sparse feature vectors. This way, a token is represented with a vec with a dimension D, where D is the total amount of features. \
+After deciding which features to use, we can represent input tokens as sparse feature vectors. This way, a token is
+represented with a vec with a dimension D, where D is the total amount of features. \
 This is done at training step.
 
 ### History tuple
@@ -384,7 +387,7 @@ class word_feature_class():
         #self.word_tags_dict = feature2id.word_tags_dict
         #self.prefix_tag_dict = feature2id.prefix_tag_dict
         self.feature2id = feature2id
-        self.word_features_list = []          #hold for each word in the data the real tag anf the relevant features.
+        self.word_features_list = []          #hold for each word in the data the real tag anf the relevant features. #TODO To ask why do we have both
         self.word_tags_features_list = []     #hold for each word in the data the relevant features for each possible tag
         self.tags_list = tags_list          #list of all possible tags
         self.file_path = file_path
@@ -425,9 +428,9 @@ class word_feature_class():
                         self.word_tags_features_list.append((word, word_features_per_tag))
 
 
-### Part 2 - Optimization
+# Part 2 - Optimization
 
-def calc_objective_per_iter(w_i, word_features_list,word_tags_features_list,num_tags,num_words,num_total_features, lamda):
+def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, num_tags, num_words, num_total_features, lamda):
     """
         Calculate max entropy likelihood for an iterative optimization method
         :param w_i: weights vector in iteration i 
@@ -441,15 +444,15 @@ def calc_objective_per_iter(w_i, word_features_list,word_tags_features_list,num_
 
     #linear term
     linear_term = 0
-    for i in range (num_words):
+    for i in range(num_words):
         for feature in word_features_list[i][2]:
             linear_term += w_i[feature]
 
     #normalization term
     normalization_term = 0
-    for i in range (num_words):
+    for i in range(num_words):
         sum_all_tags = 0
-        for j in range (num_tags):
+        for j in range(num_tags):
             sum_tag = 0
             for feature in word_tags_features_list[i][1][j]:
                 sum_tag += w_i[feature]
@@ -496,48 +499,56 @@ def calc_objective_per_iter(w_i, word_features_list,word_tags_features_list,num_
 """Now lets run the code untill we get the optimized weights"""
 
 # Statistics
-statistics = feature_statistics_class('train1.wtag')
-statistics.get_word_tag_pair_count()
-statistics.get_spelling_prefix_count()
-statistics.get_spelling_suffix_count()
-statistics.get_trigram_tags_count()
-statistics.get_bigram_tags_count()
-statistics.get_unigram_tags_count()
+class OpTyTagger():
+    def __init__(self, file_path=None):
+        self.threshold = 3
+        self.statistics = feature_statistics_class('train1.wtag')
+        self.feature2id = feature2id_class(self.statistics, self.threshold, 'train1.wtag')
+        self.tags_list = get_tags_list('train1.wtag')
+        self.word_features = None
+        self.word_features_list = None
+        self.word_tags_features_list = None
+        self.num_words = None
+        self.num_total_features = None
+        self.num_tags = None
+        self.lamda = 100
+        self.args = None
+        self.w_0 = None
+        self.optimal_params = None
+        self.weights = None
 
-# feature2id
-threshold=3
-feature2id = feature2id_class(statistics, threshold,'train1.wtag')
-feature2id.get_word_tag_pairs()
-feature2id.get_prefix_tag_pairs()
-feature2id.get_suffix_tag_pairs()
-feature2id.get_trigram_tags_pairs()
-feature2id.get_bigram_tags_pairs()
-feature2id.get_unigram_tags_pairs()
+    def fit(self):
+        self.statistics.get_word_tag_pair_count()
+        self.statistics.get_spelling_prefix_count()
+        self.statistics.get_spelling_suffix_count()
+        self.statistics.get_trigram_tags_count()
+        self.statistics.get_bigram_tags_count()
+        self.statistics.get_unigram_tags_count()
+        # feature2id
+        self.feature2id.get_word_tag_pairs()
+        self.feature2id.get_prefix_tag_pairs()
+        self.feature2id.get_suffix_tag_pairs()
+        self.feature2id.get_trigram_tags_pairs()
+        self.feature2id.get_bigram_tags_pairs()
+        self.feature2id.get_unigram_tags_pairs()
+        self.word_features = word_feature_class(self.feature2id, 'train1.wtag', self.tags_list)
+        self.word_features.find_relevant_features()
+        self.word_features_list = self.word_features.word_features_list #args1
+        self.word_tags_features_list = self.word_features.word_tags_features_list #args2
+        self.num_words = len(self.word_features_list) #args4
+        self.num_total_features = self.feature2id.n_total_features #args5
+        self.num_tags = len(self.tags_list) #args3
+        self.args = (self.word_features_list, self.word_tags_features_list, self.num_tags, self.num_words, self.num_total_features, self.lamda)
+        self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float32)
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=2, iprint=1)
+        self.weights = self.optimal_params[0]
 
-tags_list = get_tags_list('train1.wtag')
-word_features = word_feature_class(feature2id,'train1.wtag',tags_list)
-word_features.find_relevant_features()
-word_features_list=word_features.word_features_list #args1
-word_tags_features_list = word_features.word_tags_features_list #args2
-num_words = len(word_features_list) #args4
-num_total_features = feature2id.n_total_features #args5
-num_tags = len(tags_list) #args3
-lamda = 100
-args =(word_features_list,word_tags_features_list,num_tags,num_words,num_total_features, lamda)
-w_0 = np.zeros(feature2id.n_total_features, dtype=np.float32)
-optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=w_0, args=args, maxiter=1000, iprint=1)
-weights = optimal_params[0]
 
-# Now you can save weights using pickle.dump() - 'weights_path' specifies where the weight file will be saved.
-# IMPORTANT - we expect to recieve weights in 'pickle' format, don't use any other format!!
-weights_path = 'your_path_to_weights_dir/trained_weights_data_i.pkl' # i identifies which dataset this is trained on
-with open(weights_path, 'wb') as f:
-    pickle.dump(optimal_params, f)
+if __name__ == '__main__':
+    model_a = OpTyTagger()
+    model_a.fit()
 
-#### In order to load pre-trained weights, just use the next code: ####
-#                                                                     #
-# with open(weights_path, 'rb') as f:                                 #
-#   optimal_params = pickle.load(f)                                   #
-# pre_trained_weights = optimal_params[0]                             #
-#                                                                     #
-#######################################################################
+    with open('OpTyTagger.pkl', 'wb') as output:
+        pickle.dump(model_a, output)
+
+
