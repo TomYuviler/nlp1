@@ -3,6 +3,7 @@ import math
 import re
 from collections import OrderedDict
 from scipy.optimize import fmin_l_bfgs_b
+import viterbi
 import pickle
 
 
@@ -540,15 +541,17 @@ class OpTyTagger():
         self.num_tags = len(self.tags_list) #args3
         self.args = (self.word_features_list, self.word_tags_features_list, self.num_tags, self.num_words, self.num_total_features, self.lamda)
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float32)
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=2, iprint=1)
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=0, iprint=1)
         self.weights = self.optimal_params[0]
-
 
 if __name__ == '__main__':
     model_a = OpTyTagger()
     model_a.fit()
+    print("whatttttttttttttttttttttttttttttttttttttttttttt")
+    pickle.dump(model_a, 'OpTyTagger.pkl')
+    viterbi_1 = viterbi.Viterbi(model_a)
+    viterbi_1(model_a)
 
-    with open('OpTyTagger.pkl', 'wb') as output:
-        pickle.dump(model_a, output)
+
 
 
