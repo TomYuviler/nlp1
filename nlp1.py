@@ -506,19 +506,6 @@ class OpTyTagger():
         self.statistics = feature_statistics_class('train1.wtag')
         self.feature2id = feature2id_class(self.statistics, self.threshold, 'train1.wtag')
         self.tags_list = get_tags_list('train1.wtag')
-        self.word_features = None
-        self.word_features_list = None
-        self.word_tags_features_list = None
-        self.num_words = None
-        self.num_total_features = None
-        self.num_tags = None
-        self.lamda = 100
-        self.args = None
-        self.w_0 = None
-        self.optimal_params = None
-        self.weights = None
-
-    def fit(self):
         self.statistics.get_word_tag_pair_count()
         self.statistics.get_spelling_prefix_count()
         self.statistics.get_spelling_suffix_count()
@@ -540,17 +527,23 @@ class OpTyTagger():
         self.num_total_features = self.feature2id.n_total_features #args5
         self.num_tags = len(self.tags_list) #args3
         self.args = (self.word_features_list, self.word_tags_features_list, self.num_tags, self.num_words, self.num_total_features, self.lamda)
+
+
+    def fit(self):
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float32)
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=0, iprint=1)
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=1, iprint=1)
         self.weights = self.optimal_params[0]
 
 if __name__ == '__main__':
-    model_a = OpTyTagger()
-    model_a.fit()
-    print("whatttttttttttttttttttttttttttttttttttttttttttt")
-    pickle.dump(model_a, 'OpTyTagger.pkl')
+    # model_a = OpTyTagger()
+    # model_a.fit()
+    # print("whatttttttttttttttttttttttttttttttttttttttttttt")
+    with open('OpTyTagger.pkl', 'rb') as pickle_file:
+        # pickle.dump(model_a, pickle_file)
+        model_a = pickle.load(pickle_file)
+    print("viterbi")
     viterbi_1 = viterbi.Viterbi(model_a)
-    viterbi_1(model_a)
+    viterbi_1.run_viterbi("The Treasury is still working out .")
 
 
 
