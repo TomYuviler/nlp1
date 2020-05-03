@@ -26,7 +26,7 @@ class Viterbi():
         self.tags_pair_pos = {(pair[0], pair[1]): i for i, pair in enumerate(self.tags_pairs)}
 
     def get_history(self, v, t, u, sentence, k):
-        """ Return the history vector for the requested word in a certain sentence.
+        """ Returns the history vector for the requested word in a certain sentence.
 
             Args:
                 v (string): The tag of the Kth positioned word.
@@ -36,29 +36,49 @@ class Viterbi():
                 k (int): The position of the requested word.
 
             Returns:
-                    A history vector (list of strings).
+                A history vector (list of strings): (word, ptag, ntag, ctag, pword, nword, pptag).
         """
-        split_words = ['*'] + sentence.split(' ')
-        del split_words[-1]
-        split_words = split_words + ['STOP']
+        split_words = sentence + ['STOP']
         pptag = t
         ptag = u
         ctag = v
         pword, word, nword = split_words[k-1:k+2]
-        ntag = 'VBZ'
+        ntag = 'VBZ'  # TODO: deal with it - right now it's just a random word u chose.
         history = (word, ptag, ntag, ctag, pword, nword, pptag)
-        return len(split_words), history
+        return history
 
     def get_tri_probability(self, v, t, u, sentence, k):
+        """ Returns the probability that the tag of the k word is v based on t as the k-2 tag,
+            u the k-1 tag and the sentence.
+
+            Args:
+                v (string): The tag of the Kth positioned word.
+                t (string): The tag of the K-2th positioned word.
+                u (string): The tag of the K-1th positioned word.
+                sentence (list of strings): The current sentence.
+                k (int): The position of the requested word.
+
+            Returns:
+                linear_term (float): Represent the probability of the requested event.
+        """
         linear_term = 0
+        split_words = ['*'] + sentence.split(' ')
         weights = [random.uniform(0, 1) for weight in self.model.weights]
-        num_words, history = self.get_history(v, t, u, sentence, k)
+        history = self.get_history(v, t, u, split_words, k)
         word_features_list = nlp1.represent_input_with_features(history, self.model.feature2id)
         for feature in word_features_list:
             linear_term += weights[feature]
-        return linear_term
+        return linear_term  # TODO: Right now it's the linear term. Does it matter?
 
-    def run_viterbi(self, sentence, beam_size=5):
+    def run_viterbi(self, sentence, beam_size=5, active_beam=False):
+        """
+        Arg:
+            sentence (string): The requested sentence to tag.
+            beam_size (int): The beam size in case we use Beam Viterbi.
+            active_beam (bool): Gets True if we want to run a Beam Viterbi algorithm instead of the regular one.
+
+        Return:
+        """
 
         n = len(sentence.split(' '))
         pi = np.full((n, self.num_of_tags ** 2), -np.inf)
@@ -79,15 +99,16 @@ class Viterbi():
                 pi[k, self.tags_pair_pos[(u, v)]] = values[max_pos]
                 bp[k, self.tags_pair_pos[(u, v)]] = max_pos
 
-            # Beam implementation:
-            # pi_k = pi[k, :]
-            # pi_k = pi_k[np.argpartition(pi_k, - beam_size)[- beam_size:]]
-            # pi[k, :beam_size] = pi_k
+            if active_beam:
+                pi_k = pi[k, :]
+                pi_k = pi_k[np.argpartition(pi_k, - beam_size)[- beam_size:]]
+                pi[k, :beam_size] = pi_k
 
         predicted_tags[-1], predicted_tags[-2] = self.tags_pairs[np.argmax(pi[n-1,:])]
         for k in range(n-3, -1, -1):
 
             predicted_tags[k] = self.tags_list[int(bp[k+2, self.tags_pair_pos[(predicted_tags[k+1], predicted_tags[k+2])]])]
+        print(predicted_tags)
         return predicted_tags
 
 
