@@ -21,7 +21,7 @@ class Viterbi():
     def __init__(self, model):
         self.model = model
         self.tags_list = ['*'] + model.tags_list
-        self.num_of_tags = len(self.tags_list) + 1
+        self.num_of_tags = len(self.tags_list)
         self.tags_pairs = [(x, y) for x in self.tags_list for y in self.tags_list]
         self.tags_pair_pos = {(pair[0], pair[1]): i for i, pair in enumerate(self.tags_pairs)}
 
@@ -104,7 +104,7 @@ class Viterbi():
                 pi[k, :beam_size] = pi_k
                 pi[k, beam_size+1:] = -np.inf  # TODO: is it valid?
 
-        predicted_tags[-1], predicted_tags[-2] = self.tags_pairs[np.argmax(pi[n-1,:])]
+        predicted_tags[n-2], predicted_tags[n-1] = self.tags_pairs[np.argmax(pi[n-1,:])]
         for k in range(n-3, -1, -1):
 
             predicted_tags[k] = self.tags_list[int(bp[k+2, self.tags_pair_pos[(predicted_tags[k+1], predicted_tags[k+2])]])]
