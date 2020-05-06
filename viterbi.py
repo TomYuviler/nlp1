@@ -20,7 +20,7 @@ class Viterbi():
 
     def __init__(self, model):
         self.model = model
-        self.tags_list = ['*', 'DT', 'NNP', 'VB', 'RBZ']
+        self.tags_list = ['*'] + model.tags_list
         self.num_of_tags = len(self.tags_list) + 1
         self.tags_pairs = [(x, y) for x in self.tags_list for y in self.tags_list]
         self.tags_pair_pos = {(pair[0], pair[1]): i for i, pair in enumerate(self.tags_pairs)}
@@ -63,11 +63,10 @@ class Viterbi():
         """
         linear_term = 0
         split_words = ['*'] + sentence.split(' ')
-        weights = [random.uniform(0, 1) for weight in self.model.weights]
         history = self.get_history(v, t, u, split_words, k)
         word_features_list = nlp1.represent_input_with_features(history, self.model.feature2id)
         for feature in word_features_list:
-            linear_term += weights[feature]
+            linear_term += self.model.weights[feature]
         return linear_term  # TODO: Right now it's the linear term. Does it matter?
 
     def run_viterbi(self, sentence, beam_size=5, active_beam=False):
@@ -103,6 +102,7 @@ class Viterbi():
                 pi_k = pi[k, :]
                 pi_k = pi_k[np.argpartition(pi_k, - beam_size)[- beam_size:]]
                 pi[k, :beam_size] = pi_k
+                pi[k, beam_size+1:] = -np.inf  # TODO: is it valid?
 
         predicted_tags[-1], predicted_tags[-2] = self.tags_pairs[np.argmax(pi[n-1,:])]
         for k in range(n-3, -1, -1):

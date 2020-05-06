@@ -480,7 +480,7 @@ def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, nu
             sum_tag = 0
             for feature in word_tags_features_list[i][1][k]:
                 sum_tag += w_i[feature]
-        denominator += math.exp(sum_tag)
+            denominator += math.exp(sum_tag)
         for j in range(num_tags):
             sum_tag = 0
             for feature in word_tags_features_list[i][1][j]:
@@ -503,6 +503,7 @@ def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, nu
 class OpTyTagger():
     def __init__(self, file_path=None):
         self.threshold = 3
+        self.lamda = 100
         self.statistics = feature_statistics_class('train1.wtag')
         self.feature2id = feature2id_class(self.statistics, self.threshold, 'train1.wtag')
         self.tags_list = get_tags_list('train1.wtag')
@@ -531,8 +532,9 @@ class OpTyTagger():
 
     def fit(self):
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float32)
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=1, iprint=1)
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=5, iprint=1)
         self.weights = self.optimal_params[0]
+        print(self.weights)
 
 if __name__ == '__main__':
     # model_a = OpTyTagger()
