@@ -545,7 +545,8 @@ if __name__ == '__main__':
         model_a = pickle.load(pickle_file)
     print("viterbi")
     viterbi_1 = viterbi.Viterbi(model_a)
-    viterbi_1.run_viterbi("The Treasury is still working out the details with bank trade associations and the ._.")
+    viterbi_1.viterbi_that_file('sentence.wtag', with_tags=True)
+    # viterbi_1.run_viterbi("The Treasury is still working out the details with bank trade associations and the ._.")
     # viterbi_1.run_viterbi("The DT Treasury is still working out the details with bank trade associations and the other government agencies that have a hand in fighting money laundering ._.")
 
 

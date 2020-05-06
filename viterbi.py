@@ -1,6 +1,6 @@
 import numpy as np
 import nlp1
-import random
+import re
 import sys
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -62,12 +62,24 @@ class Viterbi():
                 linear_term (float): Represent the probability of the requested event.
         """
         linear_term = 0
-        split_words = ['*'] + sentence.split(' ')
+        split_words = ['*'] + sentence
         history = self.get_history(v, t, u, split_words, k)
         word_features_list = nlp1.represent_input_with_features(history, self.model.feature2id)
         for feature in word_features_list:
             linear_term += self.model.weights[feature]
         return linear_term  # TODO: Right now it's the linear term. Does it matter?
+
+    def get_accuracy(self, real_tags, predicted):
+        """
+        Arg:
+        Return:
+        """
+        n = len(real_tags)
+        num_of_correct = 0
+        for i in range(n):
+            num_of_correct = num_of_correct + (real_tags[i] == predicted[i])
+
+        return float(num_of_correct)/n
 
     def run_viterbi(self, sentence, beam_size=5, active_beam=False):
         """
@@ -78,8 +90,7 @@ class Viterbi():
 
         Return:
         """
-
-        n = len(sentence.split(' '))
+        n = len(sentence)
         pi = np.full((n, self.num_of_tags ** 2), -np.inf)
         bp = np.zeros((n, self.num_of_tags ** 2))
         pi[0, self.tags_pair_pos[('*', '*')]] = 1
@@ -106,10 +117,42 @@ class Viterbi():
 
         predicted_tags[n-2], predicted_tags[n-1] = self.tags_pairs[np.argmax(pi[n-1,:])]
         for k in range(n-3, -1, -1):
-
             predicted_tags[k] = self.tags_list[int(bp[k+2, self.tags_pair_pos[(predicted_tags[k+1], predicted_tags[k+2])]])]
-        print(predicted_tags)
         return predicted_tags
+
+    def viterbi_that_file(self, file_path, with_tags=False):
+        """
+        Tag all the words in the requested file with the OpTy Model through Viterbi algorithm.
+
+        Args:
+            file_path (string): The path to the file that contains the words to be tagged.
+            with_tags (bool): Gets True if the file contains words with tags.
+
+        Return:
+            A list of the predicted tags.
+        """
+        predictions = []
+        real_tags = []
+        sentence = []
+
+        with open(file_path) as f:
+            for line in f:
+                split_words = line.split(' ')
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_words[word_idx].split('_')
+                    sentence.append(cur_word)
+                    if cur_tag != '.' and cur_tag != '.\n':
+                        real_tags.append(cur_tag)
+
+                pred_tags = self.run_viterbi(sentence)[1:]
+                for prediction in pred_tags:
+                    predictions.append(prediction)
+                sentence = []
+
+        print(predictions)
+        if with_tags:
+            print("The Accuracy is:", self.get_accuracy(real_tags, predictions))
+
 
 
 if __name__ == '__main__':
