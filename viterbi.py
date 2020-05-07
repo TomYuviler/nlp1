@@ -1,6 +1,7 @@
 import numpy as np
 import nlp1
 import re
+import math
 import sys
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -44,8 +45,12 @@ class Viterbi():
         ctag = v
         pword, word, nword = split_words[k-1:k+2]
         ntag = 'VBZ'  # TODO: deal with it - right now it's just a random word u chose.
-        history = (word, ptag, ntag, ctag, pword, nword, pptag)
-        return history
+        current_history = (word, ptag, ntag, ctag, pword, nword, pptag)
+        other_histories = []
+        for tag in self.model.tags_list:
+            other_histories.append((word, ptag, ntag, tag, pword, nword, pptag))
+
+        return current_history, other_histories
 
     def get_tri_probability(self, v, t, u, sentence, k):
         """ Returns the probability that the tag of the k word is v based on t as the k-2 tag,
@@ -63,21 +68,37 @@ class Viterbi():
         """
         linear_term = 0
         split_words = ['*'] + sentence
-        history = self.get_history(v, t, u, split_words, k)
+        history, other_histories = self.get_history(v, t, u, split_words, k)
         word_features_list = nlp1.represent_input_with_features(history, self.model.feature2id)
         for feature in word_features_list:
             linear_term += self.model.weights[feature]
-        return linear_term  # TODO: Right now it's the linear term. Does it matter?
+        numerator = math.exp(linear_term)
+
+        denominator = 0
+        linear_term = 0
+        for other_history in other_histories:
+            word_features_list = nlp1.represent_input_with_features(other_history, self.model.feature2id)
+            for feature in word_features_list:
+                linear_term += self.model.weights[feature]
+            denominator = denominator + math.exp(linear_term)
+        return numerator/denominator
 
     def get_accuracy(self, real_tags, predicted):
         """
         Arg:
+            real_tags (list of strings): Contains the real tags.
+            predicted (list of strings): Contains the predicted tags.
+
         Return:
+            The accuracy measure of the current prediction.
         """
         n = len(real_tags)
         num_of_correct = 0
         for i in range(n):
             num_of_correct = num_of_correct + (real_tags[i] == predicted[i])
+
+        print("num of words:", n)
+        print("num of correct tags:", num_of_correct)
 
         return float(num_of_correct)/n
 
@@ -90,7 +111,7 @@ class Viterbi():
 
         Return:
         """
-        n = len(sentence)
+        n = len(sentence) + 1
         pi = np.full((n, self.num_of_tags ** 2), -np.inf)
         bp = np.zeros((n, self.num_of_tags ** 2))
         pi[0, self.tags_pair_pos[('*', '*')]] = 1
@@ -111,9 +132,10 @@ class Viterbi():
 
             if active_beam:
                 pi_k = pi[k, :]
-                pi_k = pi_k[np.argpartition(pi_k, - beam_size)[- beam_size:]]
-                pi[k, :beam_size] = pi_k
-                pi[k, beam_size+1:] = -np.inf  # TODO: is it valid?
+                threshold = pi_k[np.argpartition(pi_k, len(pi_k) - beam_size)[len(pi_k) - beam_size]]
+                pi[k, :] = np.where(pi_k >= threshold, pi_k, -np.inf)
+
+
 
         predicted_tags[n-2], predicted_tags[n-1] = self.tags_pairs[np.argmax(pi[n-1,:])]
         for k in range(n-3, -1, -1):
@@ -137,18 +159,18 @@ class Viterbi():
 
         with open(file_path) as f:
             for line in f:
-                split_words = line.split(' ')
+                split_words = re.split(' |\n', line)
+                del split_words[-1]
                 for word_idx in range(len(split_words)):
-                    cur_word, cur_tag = split_words[word_idx].split('_')
+                    cur_word, cur_tag = re.split('_', split_words[word_idx])
                     sentence.append(cur_word)
-                    if cur_tag != '.' and cur_tag != '.\n':
-                        real_tags.append(cur_tag)
+                    real_tags.append(cur_tag)
 
-                pred_tags = self.run_viterbi(sentence)[1:]
+                pred_tags = self.run_viterbi(sentence, active_beam=True, beam_size=6)[1:]
                 for prediction in pred_tags:
                     predictions.append(prediction)
                 sentence = []
-
+        print(real_tags)
         print(predictions)
         if with_tags:
             print("The Accuracy is:", self.get_accuracy(real_tags, predictions))
