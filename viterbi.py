@@ -44,7 +44,7 @@ class Viterbi():
         ptag = u
         ctag = v
         pword, word, nword = split_words[k-1:k+2]
-        ntag = 'VBZ'  # TODO: deal with it - right now it's just a random word u chose.
+        ntag = ' '  # TODO: deal with it - right now it's just a random word u chose.
         current_history = (word, ptag, ntag, ctag, pword, nword, pptag)
         other_histories = []
         for tag in self.model.tags_list:
@@ -54,7 +54,7 @@ class Viterbi():
 
     def get_tri_probability(self, v, t, u, sentence, k):
         """ Returns the probability that the tag of the k word is v based on t as the k-2 tag,
-            u the k-1 tag and the sentence.
+            u as the k-1 tag and the current sentence.
 
             Args:
                 v (string): The tag of the Kth positioned word.
@@ -64,7 +64,7 @@ class Viterbi():
                 k (int): The position of the requested word.
 
             Returns:
-                linear_term (float): Represent the probability of the requested event.
+                numerator/denominator (float): Represent the probability of the requested event.
         """
         linear_term = 0
         split_words = ['*'] + sentence
@@ -75,22 +75,24 @@ class Viterbi():
         numerator = math.exp(linear_term)
 
         denominator = 0
-        linear_term = 0
         for other_history in other_histories:
+            linear_term = 0
             word_features_list = nlp1.represent_input_with_features(other_history, self.model.feature2id)
             for feature in word_features_list:
                 linear_term += self.model.weights[feature]
             denominator = denominator + math.exp(linear_term)
-        return numerator/denominator
+        return float(numerator)/denominator
 
     def get_accuracy(self, real_tags, predicted):
         """
+        Calculate and returns the accuracy measure of the current prediction.
+
         Arg:
             real_tags (list of strings): Contains the real tags.
             predicted (list of strings): Contains the predicted tags.
 
         Return:
-            The accuracy measure of the current prediction.
+            (float): The accuracy measure of the current prediction.
         """
         n = len(real_tags)
         num_of_correct = 0
@@ -110,6 +112,7 @@ class Viterbi():
             active_beam (bool): Gets True if we want to run a Beam Viterbi algorithm instead of the regular one.
 
         Return:
+            list of the predicted tags for the current sentence.
         """
         n = len(sentence) + 1
         pi = np.full((n, self.num_of_tags ** 2), -np.inf)
@@ -135,10 +138,8 @@ class Viterbi():
                 threshold = pi_k[np.argpartition(pi_k, len(pi_k) - beam_size)[len(pi_k) - beam_size]]
                 pi[k, :] = np.where(pi_k >= threshold, pi_k, -np.inf)
 
-
-
         predicted_tags[n-2], predicted_tags[n-1] = self.tags_pairs[np.argmax(pi[n-1,:])]
-        for k in range(n-3, -1, -1):
+        for k in range(n-3, 0, -1):
             predicted_tags[k] = self.tags_list[int(bp[k+2, self.tags_pair_pos[(predicted_tags[k+1], predicted_tags[k+2])]])]
         return predicted_tags
 
@@ -166,7 +167,7 @@ class Viterbi():
                     sentence.append(cur_word)
                     real_tags.append(cur_tag)
 
-                pred_tags = self.run_viterbi(sentence, active_beam=True, beam_size=6)[1:]
+                pred_tags = self.run_viterbi(sentence, active_beam=True, beam_size=5)[1:]
                 for prediction in pred_tags:
                     predictions.append(prediction)
                 sentence = []
