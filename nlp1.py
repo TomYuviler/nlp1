@@ -6,6 +6,8 @@ from scipy.optimize import fmin_l_bfgs_b
 import viterbi
 import pickle
 from datetime import datetime
+from scipy.special import logsumexp
+from scipy.special import softmax
 
 now = datetime.now()
 time = now.strftime("%Y%m%d-%H%M%S")
@@ -52,6 +54,9 @@ class feature_statistics_class():
         self.trigram_tags_count_dict = OrderedDict()
         self.bigram_tags_count_dict = OrderedDict()
         self.unigram_tags_count_dict = OrderedDict()
+        self.is_number_count_dict = OrderedDict()
+        self.is_capital_count_dict = OrderedDict()
+
 
     def get_word_tag_pair_count(self):
         """
@@ -166,6 +171,41 @@ class feature_statistics_class():
                     else:
                         self.unigram_tags_count_dict[(cur_tag)] += 1
 
+
+    def get_is_number_count(self):
+        """
+            Extract out of text all words that include number
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if any(char.isdigit() for char in cur_word):
+                        if (cur_tag) not in self.is_number_count_dict:
+                            self.is_number_count_dict[(cur_tag)] = 1
+                        else:
+                            self.is_number_count_dict[(cur_tag)] += 1
+
+
+    def get_is_capital_count(self):
+        """
+            Extract out of text all words that include capital letter
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if any(char.isupper() for char in cur_word):
+                        if (cur_tag) not in self.is_capital_count_dict:
+                            self.is_capital_count_dict[(cur_tag)] = 1
+                        else:
+                            self.is_capital_count_dict[(cur_tag)] += 1
     # --- ADD YOURE CODE BELOW --- #
 
 
@@ -188,6 +228,9 @@ class feature2id_class():
         self.n_trigram_tags = 0
         self.n_bigram_tags = 0
         self.n_unigram_tags = 0
+        self.n_is_number = 0
+        self.n_is_capital = 0
+
 
         # Init all features dictionaries
         self.words_tags_dict = OrderedDict()
@@ -196,6 +239,10 @@ class feature2id_class():
         self.trigram_tags_dict = OrderedDict()
         self.bigram_tags_dict = OrderedDict()
         self.unigram_tags_dict = OrderedDict()
+        self.is_number_dict = OrderedDict()
+        self.is_capital_dict = OrderedDict()
+
+
 
 
     def get_word_tag_pairs(self):
@@ -324,6 +371,42 @@ class feature2id_class():
         self.n_total_features = self.n_total_features + self.n_unigram_tags
 
 
+    def get_is_number_pairs(self):
+        """
+            Extract out of text all tags
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if any(char.isdigit() for char in cur_word):
+                        if ((cur_tag) not in self.is_number_dict) \
+                            and (self.feature_statistics.is_number_count_dict[(cur_tag)] >= self.threshold):
+                            self.is_number_dict[(cur_tag)] = self.n_total_features + self.n_is_number
+                            self.n_is_number += 1
+        self.n_total_features = self.n_total_features + self.n_is_number
+
+
+    def get_is_capital_pairs(self):
+        """
+            Extract out of text all tags
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if any(char.isupper() for char in cur_word):
+                        if ((cur_tag) not in self.is_capital_dict) \
+                            and (self.feature_statistics.is_capital_count_dict[(cur_tag)] >= self.threshold):
+                            self.is_capital_dict[(cur_tag)] = self.n_total_features + self.n_is_capital
+                            self.n_is_capital += 1
+        self.n_total_features = self.n_total_features + self.n_is_capital
     # --- ADD YOURE CODE BELOW --- #
 
 
@@ -381,6 +464,15 @@ def represent_input_with_features(history, feature2id):
     if (ctag) in feature2id.unigram_tags_dict:
         features.append(feature2id.unigram_tags_dict[(ctag)])
 
+    # is number tags
+    if any(char.isdigit() for char in word):
+        if (ctag) in feature2id.is_number_dict:
+            features.append(feature2id.is_number_dict[(ctag)])
+
+    # is capital tags
+    if any(char.isupper() for char in word):
+        if (ctag) in feature2id.is_capital_dict:
+            features.append(feature2id.is_capital_dict[(ctag)])
     return features
 
 
@@ -455,13 +547,16 @@ def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, nu
     #normalization term
     normalization_term = 0
     for i in range(num_words):
-        sum_all_tags = 0
+        #sum_all_tags = 0
+        sum_all_tags_list = []
         for j in range(num_tags):
             sum_tag = 0
             for feature in word_tags_features_list[i][1][j]:
                 sum_tag += w_i[feature]
-            sum_all_tags += math.exp(sum_tag)
-        normalization_term += math.log(sum_all_tags)
+            #sum_all_tags += math.exp(sum_tag)
+            sum_all_tags_list.append(sum_tag)
+        #normalization_term += math.log(sum_all_tags)
+        normalization_term += logsumexp(sum_all_tags_list)
 
     #regularization
     regularization = 0
@@ -477,7 +572,7 @@ def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, nu
 
     #expected counts
     expected_counts = np.zeros(num_total_features, dtype=np.float32)
-    for i in range(num_words):
+    """for i in range(num_words):
         denominator = 0
         for k in range(num_tags):
             sum_tag = 0
@@ -490,7 +585,20 @@ def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, nu
                 sum_tag += w_i[feature]
             numerator = math.exp(sum_tag)
             for feature in word_tags_features_list[i][1][j]:
-                expected_counts[feature] += numerator/denominator
+                expected_counts[feature] += numerator/denominator"""
+
+    for i in range(num_words):
+        sum_tag_list = []
+        for k in range(num_tags):
+            sum_tag = 0
+            for feature in word_tags_features_list[i][1][k]:
+                sum_tag += w_i[feature]
+            sum_tag_list.append(sum_tag)
+        softmax_list = softmax(sum_tag_list)
+        for j in range(num_tags):
+            for feature in word_tags_features_list[i][1][j]:
+                expected_counts[feature] += softmax_list[j]
+
 
     #regularization grad
     regularization_grad = w_i*lamda
@@ -505,8 +613,8 @@ def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, nu
 # Statistics
 class OpTyTagger():
     def __init__(self, file_path=None):
-        self.threshold = 1
-        self.lamda = 100
+        self.threshold = 0
+        self.lamda = 5
         self.statistics = feature_statistics_class('train1.wtag')
         self.feature2id = feature2id_class(self.statistics, self.threshold, 'train1.wtag')
         self.tags_list = get_tags_list('train1.wtag')
@@ -516,6 +624,9 @@ class OpTyTagger():
         self.statistics.get_trigram_tags_count()
         self.statistics.get_bigram_tags_count()
         self.statistics.get_unigram_tags_count()
+        self.statistics.get_is_number_count()
+        self.statistics.get_is_capital_count()
+
         # feature2id
         self.feature2id.get_word_tag_pairs()
         self.feature2id.get_prefix_tag_pairs()
@@ -523,6 +634,10 @@ class OpTyTagger():
         self.feature2id.get_trigram_tags_pairs()
         self.feature2id.get_bigram_tags_pairs()
         self.feature2id.get_unigram_tags_pairs()
+        self.feature2id.get_is_number_pairs()
+        self.feature2id.get_is_capital_pairs()
+
+
         self.word_features = word_feature_class(self.feature2id, 'train1.wtag', self.tags_list)
         self.word_features.find_relevant_features()
         self.word_features_list = self.word_features.word_features_list #args1
@@ -535,7 +650,7 @@ class OpTyTagger():
     def fit(self):
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float32)
         # self.w_0 = np.random.normal(0, 0.01, self.feature2id.n_total_features) # TODO: is it a good init?
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=10, iprint=1)
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=5, iprint=1)
         self.weights = self.optimal_params[0]
         print(self.weights)
 
@@ -548,12 +663,12 @@ if __name__ == '__main__':
         with open('OpTyTagger{}.pkl'.format(time), 'wb') as pickle_file:
             pickle.dump(model_a, pickle_file)
     else:
-        with open('OpTyTagger20200507-112648.pkl', 'rb') as pickle_file:
+        with open('OpTyTagger20200508-004559.pkl', 'rb') as pickle_file:
             model_a = pickle.load(pickle_file)
             print(len(model_a.weights))
         print("viterbi")
         viterbi_1 = viterbi.Viterbi(model_a)
-        viterbi_1.viterbi_that_file('sentence.wtag', with_tags=True)
+        viterbi_1.viterbi_that_file('test1.wtag', with_tags=True)
 
 
 
