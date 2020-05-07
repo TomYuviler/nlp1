@@ -5,7 +5,10 @@ from collections import OrderedDict
 from scipy.optimize import fmin_l_bfgs_b
 import viterbi
 import pickle
+from datetime import datetime
 
+now = datetime.now()
+time = now.strftime("%Y%m%d-%H%M%S")
 
 # split line to list of word_tag
 def split_line(line):
@@ -502,7 +505,7 @@ def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, nu
 # Statistics
 class OpTyTagger():
     def __init__(self, file_path=None):
-        self.threshold = 0
+        self.threshold = 1
         self.lamda = 100
         self.statistics = feature_statistics_class('train1.wtag')
         self.feature2id = feature2id_class(self.statistics, self.threshold, 'train1.wtag')
@@ -529,25 +532,25 @@ class OpTyTagger():
         self.num_tags = len(self.tags_list) #args3
         self.args = (self.word_features_list, self.word_tags_features_list, self.num_tags, self.num_words, self.num_total_features, self.lamda)
 
-
     def fit(self):
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float32)
-        # self.w_0 = np.random.normal(0, 1, self.feature2id.n_total_features) # TODO: is it a good init?
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=30, iprint=1)
+        # self.w_0 = np.random.normal(0, 0.01, self.feature2id.n_total_features) # TODO: is it a good init?
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=10, iprint=1)
         self.weights = self.optimal_params[0]
         print(self.weights)
 
 if __name__ == '__main__':
-    train = True
+    train = False
 
     if train:
         model_a = OpTyTagger()
         model_a.fit()
-        with open('OpTyTagger.pkl', 'wb') as pickle_file:
+        with open('OpTyTagger{}.pkl'.format(time), 'wb') as pickle_file:
             pickle.dump(model_a, pickle_file)
     else:
-        with open('OpTyTagger.pkl', 'rb') as pickle_file:
+        with open('OpTyTagger20200507-112648.pkl', 'rb') as pickle_file:
             model_a = pickle.load(pickle_file)
+            print(len(model_a.weights))
         print("viterbi")
         viterbi_1 = viterbi.Viterbi(model_a)
         viterbi_1.viterbi_that_file('sentence.wtag', with_tags=True)
