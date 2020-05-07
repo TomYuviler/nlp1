@@ -503,7 +503,7 @@ def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, nu
 class OpTyTagger():
     def __init__(self, file_path=None):
         self.threshold = 0
-        self.lamda = 100
+        self.lamda = 2
         self.statistics = feature_statistics_class('train1.wtag')
         self.feature2id = feature2id_class(self.statistics, self.threshold, 'train1.wtag')
         self.tags_list = get_tags_list('train1.wtag')
@@ -533,12 +533,12 @@ class OpTyTagger():
     def fit(self):
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float32)
         # self.w_0 = np.random.normal(0, 1, self.feature2id.n_total_features) # TODO: is it a good init?
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=5, iprint=1)
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=8, iprint=1)
         self.weights = self.optimal_params[0]
         print(self.weights)
 
 if __name__ == '__main__':
-    train = True
+    train = False
 
     if train:
         model_a = OpTyTagger()
@@ -550,7 +550,7 @@ if __name__ == '__main__':
             model_a = pickle.load(pickle_file)
         print("viterbi")
         viterbi_1 = viterbi.Viterbi(model_a)
-        viterbi_1.viterbi_that_file('sentence.wtag', with_tags=True)
+        viterbi_1.viterbi_that_file('test1.wtag', with_tags=True)
 
 
 
