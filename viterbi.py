@@ -159,7 +159,11 @@ class Viterbi():
         sentence = []
 
         with open(file_path) as f:
+            i = 0
             for line in f:
+                if i==30:
+                    break
+                i+=1
                 split_words = re.split(' |\n', line)
                 del split_words[-1]
                 for word_idx in range(len(split_words)):
