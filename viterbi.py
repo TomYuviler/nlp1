@@ -161,7 +161,8 @@ class Viterbi():
         with open(file_path) as f:
             i = 0
             for line in f:
-                if i==30:
+                print(i)
+                if i==200:
                     break
                 i+=1
                 split_words = re.split(' |\n', line)
