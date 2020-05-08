@@ -262,6 +262,7 @@ class feature2id_class():
                         self.words_tags_dict[(cur_word, cur_tag)] = self.n_tag_pairs
                         self.n_tag_pairs += 1
         self.n_total_features += self.n_tag_pairs
+        print(self.words_tags_dict.values())
         
 
     def get_prefix_tag_pairs(self):
@@ -281,7 +282,9 @@ class feature2id_class():
                         and (self.feature_statistics.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] >= self.threshold):
                             self.prefix_tag_dict[(cur_word[:i+1], cur_tag)] = self.n_total_features + self.n_prefix_tag
                             self.n_prefix_tag += 1
-        self.n_total_features = self.n_total_features + self.n_prefix_tag    
+        self.n_total_features = self.n_total_features + self.n_prefix_tag
+        print(self.prefix_tag_dict.values())
+
 
     def get_suffix_tag_pairs(self):
         """
@@ -300,7 +303,9 @@ class feature2id_class():
                         and (self.feature_statistics.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] >= self.threshold):
                             self.suffix_tag_dict[(cur_word[-i-1:], cur_tag)] = self.n_total_features + self.n_suffix_tag
                             self.n_suffix_tag += 1
-        self.n_total_features = self.n_total_features + self.n_suffix_tag       
+        self.n_total_features = self.n_total_features + self.n_suffix_tag
+        print(self.suffix_tag_dict.values())
+
 
 
     def get_trigram_tags_pairs(self):
@@ -328,6 +333,8 @@ class feature2id_class():
                         self.trigram_tags_dict[(pptag,ptag,cur_tag)] = self.n_total_features + self.n_trigram_tags
                         self.n_trigram_tags += 1
         self.n_total_features = self.n_total_features + self.n_trigram_tags
+        print(self.trigram_tags_dict.values())
+
 
 
 
@@ -351,6 +358,7 @@ class feature2id_class():
                         self.bigram_tags_dict[(ptag,cur_tag)] = self.n_total_features + self.n_bigram_tags
                         self.n_bigram_tags += 1
         self.n_total_features = self.n_total_features + self.n_bigram_tags
+        print(self.bigram_tags_dict.values())
 
 
     def get_unigram_tags_pairs(self):
@@ -369,6 +377,8 @@ class feature2id_class():
                         self.unigram_tags_dict[(cur_tag)] = self.n_total_features + self.n_unigram_tags
                         self.n_unigram_tags += 1
         self.n_total_features = self.n_total_features + self.n_unigram_tags
+        print(self.unigram_tags_dict.values())
+
 
 
     def get_is_number_pairs(self):
@@ -388,6 +398,8 @@ class feature2id_class():
                             self.is_number_dict[(cur_tag)] = self.n_total_features + self.n_is_number
                             self.n_is_number += 1
         self.n_total_features = self.n_total_features + self.n_is_number
+        print(self.is_number_dict.values())
+
 
 
     def get_is_capital_pairs(self):
@@ -407,6 +419,8 @@ class feature2id_class():
                             self.is_capital_dict[(cur_tag)] = self.n_total_features + self.n_is_capital
                             self.n_is_capital += 1
         self.n_total_features = self.n_total_features + self.n_is_capital
+        print(self.is_capital_dict.values())
+
     # --- ADD YOURE CODE BELOW --- #
 
 
@@ -496,11 +510,11 @@ class word_feature_class():
             for line in f:
                 split_words = split_line(line)
                 del split_words[-1]
-                pptag = '*'
-                ptag = '*'
-                pword = '*'
                 length = len(split_words)
                 for word_idx in range(length):
+                    pptag = '*'
+                    ptag = '*'
+                    pword = '*'
                     if word_idx > 1:
                         ptag = split_word_tag(split_words[word_idx-1])[1]
                         pword = split_word_tag(split_words[word_idx-1])[0]
@@ -521,7 +535,7 @@ class word_feature_class():
                     for tag in self.tags_list:
                         history = (word, ptag, ntag, tag, pword, nword, pptag)
                         word_features_per_tag.append(represent_input_with_features(history, self.feature2id))
-                        self.word_tags_features_list.append((word, word_features_per_tag))
+                    self.word_tags_features_list.append((word, word_features_per_tag))
 
 
 # Part 2 - Optimization
@@ -565,27 +579,14 @@ def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, nu
     regularization = 0.5*regularization*lamda
 
     #empirical counts
-    empirical_counts = np.zeros(num_total_features, dtype=np.float32)
+    empirical_counts = np.zeros(num_total_features, dtype=np.float64)
     for i in range (num_words):
         for feature in word_features_list[i][2]:
             empirical_counts[feature] += 1
 
     #expected counts
-    expected_counts = np.zeros(num_total_features, dtype=np.float32)
-    """for i in range(num_words):
-        denominator = 0
-        for k in range(num_tags):
-            sum_tag = 0
-            for feature in word_tags_features_list[i][1][k]:
-                sum_tag += w_i[feature]
-            denominator += math.exp(sum_tag)
-        for j in range(num_tags):
-            sum_tag = 0
-            for feature in word_tags_features_list[i][1][j]:
-                sum_tag += w_i[feature]
-            numerator = math.exp(sum_tag)
-            for feature in word_tags_features_list[i][1][j]:
-                expected_counts[feature] += numerator/denominator"""
+    expected_counts = np.zeros(num_total_features, dtype=np.float64)
+
 
     for i in range(num_words):
         sum_tag_list = []
@@ -613,8 +614,8 @@ def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, nu
 # Statistics
 class OpTyTagger():
     def __init__(self, file_path=None):
-        self.threshold = 0
-        self.lamda = 5
+        self.threshold = 1
+        self.lamda = 2
         self.statistics = feature_statistics_class('train1.wtag')
         self.feature2id = feature2id_class(self.statistics, self.threshold, 'train1.wtag')
         self.tags_list = get_tags_list('train1.wtag')
@@ -645,17 +646,22 @@ class OpTyTagger():
         self.num_words = len(self.word_features_list) #args4
         self.num_total_features = self.feature2id.n_total_features #args5
         self.num_tags = len(self.tags_list) #args3
-        self.args = (self.word_features_list, self.word_tags_features_list, self.num_tags, self.num_words, self.num_total_features, self.lamda)
 
+        self.args = (self.word_features_list, self.word_tags_features_list, self.num_tags, self.num_words, self.num_total_features, self.lamda)
+        print("tom, ", len(self.args[1]))
+        print(self.num_tags)
+        print(self.num_words)
+        print(self.num_total_features)
+        print(self.lamda)
     def fit(self):
-        self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float32)
+        self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float64)
         # self.w_0 = np.random.normal(0, 0.01, self.feature2id.n_total_features) # TODO: is it a good init?
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=5, iprint=1)
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=16, iprint=1)
         self.weights = self.optimal_params[0]
         print(self.weights)
 
 if __name__ == '__main__':
-    train = False
+    train = True
 
     if train:
         model_a = OpTyTagger()
@@ -663,7 +669,7 @@ if __name__ == '__main__':
         with open('OpTyTagger{}.pkl'.format(time), 'wb') as pickle_file:
             pickle.dump(model_a, pickle_file)
     else:
-        with open('OpTyTagger20200508-004559.pkl', 'rb') as pickle_file:
+        with open('OpTyTagger20200508-032327.pkl', 'rb') as pickle_file:
             model_a = pickle.load(pickle_file)
             print(len(model_a.weights))
         print("viterbi")
