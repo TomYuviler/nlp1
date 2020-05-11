@@ -39,16 +39,16 @@ class Viterbi():
             Returns:
                 A history vector (list of strings): (word, ptag, ntag, ctag, pword, nword, pptag).
         """
-        split_words = sentence + ['STOP']
+        split_words = sentence + ['STOP'] + ['STOP']
         pptag = t
         ptag = u
         ctag = v
-        pword, word, nword = split_words[k-1:k+2]
+        ppword, pword, word, nword, nnword = split_words[k-2:k+3]
         ntag = ' '  # TODO: deal with it - right now it's just a random word u chose.
-        current_history = (word, ptag, ntag, ctag, pword, nword, pptag)
+        current_history = (word, ptag, ntag, ctag, pword, nword, pptag, ppword, nnword)
         other_histories = []
         for tag in self.model.tags_list:
-            other_histories.append((word, ptag, ntag, tag, pword, nword, pptag))
+            other_histories.append((word, ptag, ntag, tag, pword, nword, pptag, ppword, nnword))
 
         return current_history, other_histories
 
@@ -67,7 +67,7 @@ class Viterbi():
                 numerator/denominator (float): Represent the probability of the requested event.
         """
         linear_term = 0
-        split_words = ['*'] + sentence
+        split_words = ['*']+['*'] + sentence
         history, other_histories = self.get_history(v, t, u, split_words, k)
         word_features_list = nlp1.represent_input_with_features(history, self.model.feature2id)
         for feature in word_features_list:
@@ -114,13 +114,13 @@ class Viterbi():
         Return:
             list of the predicted tags for the current sentence.
         """
-        n = len(sentence) + 1
+        n = len(sentence) + 2
         pi = np.full((n, self.num_of_tags ** 2), -np.inf)
         bp = np.zeros((n, self.num_of_tags ** 2))
-        pi[0, self.tags_pair_pos[('*', '*')]] = 1
+        pi[1, self.tags_pair_pos[('*', '*')]] = 1
         predicted_tags = ['*' for word in range(n)]
 
-        for k in range(1, n):
+        for k in range(2, n):
             for u, v in self.tags_pairs:
                 values = np.full(len(self.tags_list), -np.inf)
                 for i, t in enumerate(self.tags_list):
@@ -162,7 +162,7 @@ class Viterbi():
             i = 0
             for line in f:
                 print(i)
-                if i==200:
+                if i==250:
                     break
                 i+=1
                 split_words = re.split(' |\n', line)
@@ -172,7 +172,7 @@ class Viterbi():
                     sentence.append(cur_word)
                     real_tags.append(cur_tag)
 
-                pred_tags = self.run_viterbi(sentence, active_beam=True, beam_size=5)[1:]
+                pred_tags = self.run_viterbi(sentence, active_beam=True, beam_size=5)[2:]
                 for prediction in pred_tags:
                     predictions.append(prediction)
                 sentence = []
