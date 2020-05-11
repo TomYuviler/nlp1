@@ -58,6 +58,8 @@ class feature_statistics_class():
         self.is_capital_count_dict = OrderedDict()
         self.previous_word_tag_count_dict = OrderedDict()
         self.next_word_tag_count_dict = OrderedDict()
+        self.pre_pre_word_tag_count_dict = OrderedDict()
+        self.next_next_word_tag_count_dict = OrderedDict()
 
 
 
@@ -252,6 +254,49 @@ class feature_statistics_class():
                         self.next_word_tag_count_dict[(nword,cur_tag)] = 1
                     else:
                         self.next_word_tag_count_dict[(nword,cur_tag)] += 1
+
+
+    def get_pre_pre_word_tag_count(self):
+        """
+            Extract out of text all previous previous word and current tag
+                return all previous previous words and current tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if word_idx>1:
+                        ppword = split_word_tag(split_words[word_idx-2])[0]
+                    else:
+                        ppword = '*'
+                    if (ppword,cur_tag) not in self.pre_pre_word_tag_count_dict:
+                        self.pre_pre_word_tag_count_dict[(ppword,cur_tag)] = 1
+                    else:
+                        self.pre_pre_word_tag_count_dict[(ppword,cur_tag)] += 1
+
+    def get_next_next_word_tag_count(self):
+        """
+            Extract out of text next all next word and current tag
+                return all next next words and current tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if word_idx<len(split_words)-2:
+                        nnword = split_word_tag(split_words[word_idx+2])[0]
+                    else:
+                        nnword = "STOP"
+                    if (nnword,cur_tag) not in self.next_next_word_tag_count_dict:
+                        self.next_next_word_tag_count_dict[(nnword,cur_tag)] = 1
+                    else:
+                        self.next_next_word_tag_count_dict[(nnword,cur_tag)] += 1
+
+
     # --- ADD YOURE CODE BELOW --- #
 
 
@@ -278,6 +323,10 @@ class feature2id_class():
         self.n_is_capital = 0
         self.n_previous_word_tag = 0
         self.n_next_word_tag = 0
+        self.n_pre_pre_word_tag = 0
+        self.n_next_next_word_tag = 0
+
+
 
 
 
@@ -292,6 +341,9 @@ class feature2id_class():
         self.is_capital_dict = OrderedDict()
         self.previous_word_tag_dict = OrderedDict()
         self.next_word_tag_dict = OrderedDict()
+        self.pre_pre_word_tag_dict = OrderedDict()
+        self.next_next_word_tag_dict = OrderedDict()
+
 
 
     def get_word_tag_pairs(self):
@@ -519,6 +571,51 @@ class feature2id_class():
         self.n_total_features = self.n_total_features + self.n_next_word_tag
         print(self.next_word_tag_dict.values())
 
+
+    def get_pre_pre_word_tag_pairs(self):
+        """
+            Extract out of text all previous previous word and current tag.
+                return all previous previous words and current tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if word_idx > 1:
+                        ppword = split_word_tag(split_words[word_idx - 2])[0]
+                    else:
+                        ppword = '*'
+                    if ((ppword, cur_tag) not in self.pre_pre_word_tag_dict) \
+                            and (self.feature_statistics.pre_pre_word_tag_count_dict[(ppword, cur_tag)] >= self.threshold):
+                        self.pre_pre_word_tag_dict[(ppword, cur_tag)] = self.n_total_features + self.n_pre_pre_word_tag
+                        self.n_pre_pre_word_tag += 1
+        self.n_total_features = self.n_total_features + self.n_pre_pre_word_tag
+        print(self.pre_pre_word_tag_dict.values())
+
+    def get_next_next_word_tag_pairs(self):
+        """
+            Extract out of text all next next word and current tag.
+                return all next next words and current tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if word_idx < len(split_words) - 2:
+                        nnword = split_word_tag(split_words[word_idx + 2])[0]
+                    else:
+                        nnword = "STOP"
+                    if ((nnword, cur_tag) not in self.next_next_word_tag_dict) \
+                            and (self.feature_statistics.next_next_word_tag_count_dict[(nnword, cur_tag)] >= self.threshold):
+                        self.next_next_word_tag_dict[(nnword, cur_tag)] = self.n_total_features + self.n_next_next_word_tag
+                        self.n_next_next_word_tag += 1
+        self.n_total_features = self.n_total_features + self.n_next_next_word_tag
+        print(self.next_next_word_tag_dict.values())
+
     # --- ADD YOURE CODE BELOW --- #
 
 
@@ -537,7 +634,7 @@ $$History = (W_{cur}, T_{prev}, T_{next}, T_{cur}, W_{prev}, W_{next}) $$
 def represent_input_with_features(history, feature2id):
     """
         Extract feature vector in per a given history
-        :param history: touple{word, pptag, ptag, ctag, nword, pword, pptag}
+        :param history: touple{word, pptag, ptag, ctag, nword, pword, pptag, ppword, nnword}
         :param word_tags_dict: word\tag dict
             Return a list with all features that are relevant to the given history
     """
@@ -548,6 +645,8 @@ def represent_input_with_features(history, feature2id):
     pword = history[4]
     nword = history[5]
     pptag = history[6]
+    ppword = history[7]
+    nnword = history[8]
     features = []
 
     # word-tag
@@ -593,6 +692,15 @@ def represent_input_with_features(history, feature2id):
     # next word current tag
     if (nword, ctag) in feature2id.next_word_tag_dict:
         features.append(feature2id.next_word_tag_dict[(nword, ctag)])
+
+    # previous previous word current tag
+    if (ppword, ctag) in feature2id.pre_pre_word_tag_dict:
+        features.append(feature2id.pre_pre_word_tag_dict[(ppword, ctag)])
+
+    # next next word current tag
+    if (nnword, ctag) in feature2id.next_next_word_tag_dict:
+        features.append(feature2id.next_next_word_tag_dict[(nnword, ctag)])
+
     return features
 
 """find for each word in the data the relevant features"""
@@ -619,11 +727,13 @@ class word_feature_class():
                 for word_idx in range(length):
                     pptag = '*'
                     ptag = '*'
+                    ppword = '*'
                     pword = '*'
                     if word_idx > 1:
                         ptag = split_word_tag(split_words[word_idx-1])[1]
                         pword = split_word_tag(split_words[word_idx-1])[0]
                         pptag = split_word_tag(split_words[word_idx-2])[1]
+                        ppword = split_word_tag(split_words[word_idx-2])[0]
                     elif word_idx == 1:
                         ptag = split_word_tag(split_words[word_idx-1])[1]
                         pword = split_word_tag(split_words[word_idx-1])[0]
@@ -631,14 +741,20 @@ class word_feature_class():
                     if word_idx == length-1:
                         ntag = "STOP"
                         nword = "STOP"
+                        nnword = "STOP"
+                    elif word_idx == length-2:
+                        ntag = split_word_tag(split_words[word_idx+1])[1]
+                        nword = split_word_tag(split_words[word_idx+1])[0]
+                        nnword = "STOP"
                     else:
                         ntag = split_word_tag(split_words[word_idx+1])[1]
                         nword = split_word_tag(split_words[word_idx+1])[0]
-                    history = (word, ptag, ntag, ctag, pword, nword, pptag)
+                        nnword = split_word_tag(split_words[word_idx + 2])[0]
+                    history = (word, ptag, ntag, ctag, pword, nword, pptag, ppword, nnword)
                     self.word_features_list.append((word, ctag, represent_input_with_features(history, self.feature2id)))
                     word_features_per_tag = []
                     for tag in self.tags_list:
-                        history = (word, ptag, ntag, tag, pword, nword, pptag)
+                        history = (word, ptag, ntag, tag, pword, nword, pptag, ppword, nnword)
                         word_features_per_tag.append(represent_input_with_features(history, self.feature2id))
                     self.word_tags_features_list.append((word, word_features_per_tag))
 
@@ -720,7 +836,7 @@ def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, nu
 class OpTyTagger():
     def __init__(self, file_path=None):
         self.threshold = 1
-        self.lamda = 2
+        self.lamda = 1
         self.statistics = feature_statistics_class('train1.wtag')
         self.feature2id = feature2id_class(self.statistics, self.threshold, 'train1.wtag')
         self.tags_list = get_tags_list('train1.wtag')
@@ -734,6 +850,8 @@ class OpTyTagger():
         self.statistics.get_is_capital_count()
         self.statistics.get_previous_word_tag_count()
         self.statistics.get_next_word_tag_count()
+        self.statistics.get_pre_pre_word_tag_count()
+        self.statistics.get_next_next_word_tag_count()
 
 
 
@@ -748,6 +866,9 @@ class OpTyTagger():
         self.feature2id.get_is_capital_pairs()
         self.feature2id.get_previous_word_tag_pairs()
         self.feature2id.get_next_word_tag_pairs()
+        self.feature2id.get_pre_pre_word_tag_pairs()
+        self.feature2id.get_next_next_word_tag_pairs()
+
 
 
 
@@ -768,9 +889,9 @@ class OpTyTagger():
     def fit(self):
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float64)
         # self.w_0 = np.random.normal(0, 0.01, self.feature2id.n_total_features) # TODO: is it a good init?
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=40, iprint=1)
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=150, iprint=1)
         self.weights = self.optimal_params[0]
-        print(self.weights)
+        #print(self.weights)
 
 if __name__ == '__main__':
     train = False
@@ -781,7 +902,7 @@ if __name__ == '__main__':
         with open('OpTyTagger{}.pkl'.format(time), 'wb') as pickle_file:
             pickle.dump(model_a, pickle_file)
     else:
-        with open('OpTyTagger20200508-180233.pkl', 'rb') as pickle_file:
+        with open('OpTyTagger20200510-125034.pkl', 'rb') as pickle_file:
             model_a = pickle.load(pickle_file)
             print(len(model_a.weights))
         print("viterbi")
