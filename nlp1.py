@@ -30,12 +30,18 @@ def get_tags_list(file_path):
     """
 
     tags_list=[]
+    counter = 0
     with open('train1.wtag') as f:
         for line in f:
             split_words = split_line(line)
             del split_words[-1]
             for word_idx in range(len(split_words)):
                 cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                if cur_word == "American":
+                    counter +=1
+                    print(counter)
+                    print("tag = ",cur_tag)
+                    print(line)
                 tags_list.append(cur_tag)
     return list(set(tags_list))
 
@@ -60,6 +66,15 @@ class feature_statistics_class():
         self.next_word_tag_count_dict = OrderedDict()
         self.pre_pre_word_tag_count_dict = OrderedDict()
         self.next_next_word_tag_count_dict = OrderedDict()
+        self.is_hyphen_count_dict = OrderedDict()
+        self.is_company_count_dict = OrderedDict()
+        self.is_allcaps_count_dict = OrderedDict()
+        self.is_capitalized_number_dash_count_dict = OrderedDict()
+        self.is_numberlike_count_dict = OrderedDict()
+
+
+
+
 
 
 
@@ -91,11 +106,19 @@ class feature_statistics_class():
                 for word_idx in range(len(split_words)):
                     cur_word, cur_tag = split_word_tag(split_words[word_idx])
                     length = len(cur_word)
-                    for i in range(min(4, length)):
-                        if (cur_word[:i+1], cur_tag) not in self.spelling_prefix_count_dict:
-                            self.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] = 1
-                        else:
-                            self.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] += 1
+                    if length>4:
+                        for i in range(4):
+                            if (cur_word[:i+1], cur_tag) not in self.spelling_prefix_count_dict:
+                                self.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] = 1
+                            else:
+                                self.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] += 1
+                    else:
+                        for i in range (length-1):
+                            if (cur_word[:i + 1], cur_tag) not in self.spelling_prefix_count_dict:
+                                self.spelling_prefix_count_dict[(cur_word[:i + 1], cur_tag)] = 1
+                            else:
+                                self.spelling_prefix_count_dict[(cur_word[:i + 1], cur_tag)] += 1
+
                                         
     def get_spelling_suffix_count(self):
         """
@@ -109,11 +132,19 @@ class feature_statistics_class():
                 for word_idx in range(len(split_words)):
                     cur_word, cur_tag = split_word_tag(split_words[word_idx])
                     length=len(cur_word)
-                    for i in range(min(4, length)):
-                        if (cur_word[-i-1:], cur_tag) not in self.spelling_suffix_count_dict:
-                            self.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] = 1
-                        else:
-                            self.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] += 1
+                    if length>4:
+                        for i in range(4):
+                            if (cur_word[-i-1:], cur_tag) not in self.spelling_suffix_count_dict:
+                                self.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] = 1
+                            else:
+                                self.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] += 1
+                    else:
+                        for i in range(length-1):
+                            if (cur_word[-i-1:], cur_tag) not in self.spelling_suffix_count_dict:
+                                self.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] = 1
+                            else:
+                                self.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] += 1
+
 
     def get_trigram_tags_count(self):
         """
@@ -297,6 +328,115 @@ class feature_statistics_class():
                         self.next_next_word_tag_count_dict[(nnword,cur_tag)] += 1
 
 
+    def get_is_hyphen_count(self):
+        """
+            Extract out of text all words that include hyphen(-)
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if '-' in cur_word:
+                        if (cur_tag) not in self.is_hyphen_count_dict:
+                            self.is_hyphen_count_dict[(cur_tag)] = 1
+                        else:
+                            self.is_hyphen_count_dict[(cur_tag)] += 1
+
+    def get_is_company_count(self):
+        """
+            Extract out of text all words that include capitalized word followed by Inc. or Co.
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if word_idx == len(split_words)-1:
+                        nword = "STOP"
+                        nnword = "STOP"
+                        nnnword = "STOP"
+                    elif word_idx == len(split_words)-2:
+                        nword = split_word_tag(split_words[word_idx+1])[0]
+                        nnword = "STOP"
+                        nnnword = "STOP"
+                    elif word_idx == len(split_words)-3:
+                        nword = split_word_tag(split_words[word_idx + 1])[0]
+                        nnword = split_word_tag(split_words[word_idx + 2])[0]
+                        nnnword = "STOP"
+                    else:
+                        nword = split_word_tag(split_words[word_idx+1])[0]
+                        nnword = split_word_tag(split_words[word_idx+2])[0]
+                        nnnword = split_word_tag(split_words[word_idx+3])[0]
+                    if (cur_word[0].isupper()) and (nword in ["Co.", "Inc."] or nnword in ["Co.", "Inc."] or nnnword in ["Co.", "Inc."]) :
+                        if (cur_tag) not in self.is_company_count_dict:
+                            self.is_company_count_dict[(cur_tag)] = 1
+                        else:
+                            self.is_company_count_dict[(cur_tag)] += 1
+
+
+    def get_is_allcaps_count(self):
+        """
+            Extract out of text all words that include only capital letter
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if all(char.isupper() for char in cur_word):
+                        if (cur_tag) not in self.is_allcaps_count_dict:
+                            self.is_allcaps_count_dict[(cur_tag)] = 1
+                        else:
+                            self.is_allcaps_count_dict[(cur_tag)] += 1
+
+
+    def get_is_capitalized_number_dash_count(self):
+        """
+            Extract out of text all words that include only capital letters,_digits and dashes
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if any(char.isupper() for char in cur_word) and any(char.isdigit() for char in cur_word)\
+                            and any(char == '-' for char in cur_word):
+                        if (cur_tag) not in self.is_capitalized_number_dash_count_dict:
+                            self.is_capitalized_number_dash_count_dict[(cur_tag)] = 1
+                        else:
+                            self.is_capitalized_number_dash_count_dict[(cur_tag)] += 1
+
+
+
+
+    def get_is_numberlike_count(self):
+        """
+            Extract out of text all words that include numberlike
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            numberlike = ["two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "tens" \
+                , "eleven", "twelve", "hundred", "hundreds", "thousand", "thousands"]
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if cur_word in numberlike:
+                        if (cur_tag) not in self.is_numberlike_count_dict:
+                            self.is_numberlike_count_dict[(cur_tag)] = 1
+                        else:
+                            self.is_numberlike_count_dict[(cur_tag)] += 1
+
     # --- ADD YOURE CODE BELOW --- #
 
 
@@ -325,8 +465,11 @@ class feature2id_class():
         self.n_next_word_tag = 0
         self.n_pre_pre_word_tag = 0
         self.n_next_next_word_tag = 0
-
-
+        self.n_is_hyphen = 0
+        self.n_is_company = 0
+        self.n_is_allcaps = 0
+        self.n_is_capitalized_number_dash = 0
+        self.n_is_numberlike = 0
 
 
 
@@ -343,6 +486,11 @@ class feature2id_class():
         self.next_word_tag_dict = OrderedDict()
         self.pre_pre_word_tag_dict = OrderedDict()
         self.next_next_word_tag_dict = OrderedDict()
+        self.is_hyphen_dict = OrderedDict()
+        self.is_company_dict = OrderedDict()
+        self.is_allcaps_dict = OrderedDict()
+        self.is_capitalized_number_dash_dict = OrderedDict()
+        self.is_numberlike_dict = OrderedDict()
 
 
 
@@ -378,11 +526,19 @@ class feature2id_class():
                 for word_idx in range(len(split_words)):
                     cur_word, cur_tag = split_word_tag(split_words[word_idx])
                     length = len(cur_word)
-                    for i in range (min(4,length)):
-                        if ((cur_word[:i+1], cur_tag) not in self.prefix_tag_dict) \
-                        and (self.feature_statistics.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] >= self.threshold):
-                            self.prefix_tag_dict[(cur_word[:i+1], cur_tag)] = self.n_total_features + self.n_prefix_tag
-                            self.n_prefix_tag += 1
+                    if length>4:
+                        for i in range (4):
+                            if ((cur_word[:i+1], cur_tag) not in self.prefix_tag_dict) \
+                            and (self.feature_statistics.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] >= self.threshold):
+                                self.prefix_tag_dict[(cur_word[:i+1], cur_tag)] = self.n_total_features + self.n_prefix_tag
+                                self.n_prefix_tag += 1
+                    else:
+                        for i in range(length-1):
+                            if ((cur_word[:i+1], cur_tag) not in self.prefix_tag_dict) \
+                            and (self.feature_statistics.spelling_prefix_count_dict[(cur_word[:i+1], cur_tag)] >= self.threshold):
+                                self.prefix_tag_dict[(cur_word[:i+1], cur_tag)] = self.n_total_features + self.n_prefix_tag
+                                self.n_prefix_tag += 1
+
         self.n_total_features = self.n_total_features + self.n_prefix_tag
         print(self.prefix_tag_dict.values())
 
@@ -399,11 +555,19 @@ class feature2id_class():
                 for word_idx in range(len(split_words)):
                     cur_word, cur_tag = split_word_tag(split_words[word_idx])
                     length = len(cur_word)
-                    for i in range (min(4,length)):
-                        if ((cur_word[-i-1:], cur_tag) not in self.suffix_tag_dict) \
-                        and (self.feature_statistics.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] >= self.threshold):
-                            self.suffix_tag_dict[(cur_word[-i-1:], cur_tag)] = self.n_total_features + self.n_suffix_tag
-                            self.n_suffix_tag += 1
+                    if length>4:
+                        for i in range (4):
+                            if ((cur_word[-i-1:], cur_tag) not in self.suffix_tag_dict) \
+                            and (self.feature_statistics.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] >= self.threshold):
+                                self.suffix_tag_dict[(cur_word[-i-1:], cur_tag)] = self.n_total_features + self.n_suffix_tag
+                                self.n_suffix_tag += 1
+                    else:
+                        for i in range(length-1):
+                            if ((cur_word[-i-1:], cur_tag) not in self.suffix_tag_dict) \
+                            and (self.feature_statistics.spelling_suffix_count_dict[(cur_word[-i-1:], cur_tag)] >= self.threshold):
+                                self.suffix_tag_dict[(cur_word[-i-1:], cur_tag)] = self.n_total_features + self.n_suffix_tag
+                                self.n_suffix_tag += 1
+
         self.n_total_features = self.n_total_features + self.n_suffix_tag
         print(self.suffix_tag_dict.values())
 
@@ -487,8 +651,6 @@ class feature2id_class():
             Extract out of text all tags
                 return all tags with index of appearance
         """
-        print("total = ",self.n_total_features)
-        print("tom = ",self.n_is_number)
         with open(self.file_path) as f:
             for line in f:
                 split_words = split_line(line)
@@ -501,9 +663,7 @@ class feature2id_class():
                             self.is_number_dict[(cur_tag)] = self.n_total_features + self.n_is_number
                             self.n_is_number += 1
         self.n_total_features = self.n_total_features + self.n_is_number
-        print("start")
         print(self.is_number_dict.values())
-        print("end")
 
 
 
@@ -588,7 +748,7 @@ class feature2id_class():
                     else:
                         ppword = '*'
                     if ((ppword, cur_tag) not in self.pre_pre_word_tag_dict) \
-                            and (self.feature_statistics.pre_pre_word_tag_count_dict[(ppword, cur_tag)] >= self.threshold):
+                            and (self.feature_statistics.pre_pre_word_tag_count_dict[(ppword, cur_tag)] >= 20):
                         self.pre_pre_word_tag_dict[(ppword, cur_tag)] = self.n_total_features + self.n_pre_pre_word_tag
                         self.n_pre_pre_word_tag += 1
         self.n_total_features = self.n_total_features + self.n_pre_pre_word_tag
@@ -610,12 +770,126 @@ class feature2id_class():
                     else:
                         nnword = "STOP"
                     if ((nnword, cur_tag) not in self.next_next_word_tag_dict) \
-                            and (self.feature_statistics.next_next_word_tag_count_dict[(nnword, cur_tag)] >= self.threshold):
+                            and (self.feature_statistics.next_next_word_tag_count_dict[(nnword, cur_tag)] >= 20):
                         self.next_next_word_tag_dict[(nnword, cur_tag)] = self.n_total_features + self.n_next_next_word_tag
                         self.n_next_next_word_tag += 1
         self.n_total_features = self.n_total_features + self.n_next_next_word_tag
         print(self.next_next_word_tag_dict.values())
 
+    def get_is_hyphen_pairs(self):
+        """
+            Extract out of text all tags
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if '-' in cur_word:
+                        if ((cur_tag) not in self.is_hyphen_dict) \
+                            and (self.feature_statistics.is_hyphen_count_dict[(cur_tag)] >= self.threshold):
+                            self.is_hyphen_dict[(cur_tag)] = self.n_total_features + self.n_is_hyphen
+                            self.n_is_hyphen += 1
+        self.n_total_features = self.n_total_features + self.n_is_hyphen
+        print(self.is_hyphen_dict.values())
+
+    def get_is_company_pairs(self):
+        """
+            Extract out of text all tags
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if word_idx == len(split_words)-1:
+                        nword = "STOP"
+                        nnword = "STOP"
+                        nnnword = "STOP"
+                    elif word_idx == len(split_words)-2:
+                        nword = split_word_tag(split_words[word_idx+1])[0]
+                        nnword = "STOP"
+                        nnnword = "STOP"
+                    elif word_idx == len(split_words)-3:
+                        nword = split_word_tag(split_words[word_idx+1])[0]
+                        nnword = split_word_tag(split_words[word_idx+2])[0]
+                        nnnword = "STOP"
+                    else:
+                        nword = split_word_tag(split_words[word_idx+1])[0]
+                        nnword = split_word_tag(split_words[word_idx+2])[0]
+                        nnnword = split_word_tag(split_words[word_idx+3])[0]
+                    if (cur_word[0].isupper()) and (nword in ["Co.", "Inc."] or nnword in ["Co.", "Inc."] or nnnword in ["Co.", "Inc."]):
+                        if ((cur_tag) not in self.is_company_dict) \
+                            and (self.feature_statistics.is_company_count_dict[(cur_tag)] >= self.threshold):
+                            self.is_company_dict[(cur_tag)] = self.n_total_features + self.n_is_company
+                            self.n_is_company += 1
+        self.n_total_features = self.n_total_features + self.n_is_company
+        print(self.is_company_dict.values())
+
+    def get_is_allcaps_pairs(self):
+        """
+            Extract out of text all tags
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if all(char.isupper() for char in cur_word):
+                        if ((cur_tag) not in self.is_allcaps_dict) \
+                            and (self.feature_statistics.is_allcaps_count_dict[(cur_tag)] >= self.threshold):
+                            self.is_allcaps_dict[(cur_tag)] = self.n_total_features + self.n_is_allcaps
+                            self.n_is_allcaps += 1
+        self.n_total_features = self.n_total_features + self.n_is_allcaps
+        print(self.is_allcaps_dict.values())
+
+
+    def get_is_capitalized_number_dash_pairs(self):
+        """
+            Extract out of text all tags
+                return all tags with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if any(char.isupper() for char in cur_word) and any(char.isdigit() for char in cur_word)\
+                            and any(char == '-' for char in cur_word):
+                        if ((cur_tag) not in self.is_capitalized_number_dash_dict) \
+                            and (self.feature_statistics.is_capitalized_number_dash_count_dict[(cur_tag)] >= self.threshold):
+                            self.is_capitalized_number_dash_dict[(cur_tag)] = self.n_total_features + self.n_is_capitalized_number_dash
+                            self.n_is_capitalized_number_dash += 1
+        self.n_total_features = self.n_total_features + self.n_is_capitalized_number_dash
+        print(self.is_capitalized_number_dash_dict.values())
+
+    def get_is_numberlike_pairs(self):
+        """
+            Extract out of text all tags
+                return all tags with index of appearance
+        """
+        numberlike = ["two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "tens" \
+            , "eleven", "twelve", "hundred", "hundreds", "thousand", "thousands"]
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    if cur_word in numberlike:
+                        if ((cur_tag) not in self.is_numberlike_dict) \
+                                and (self.feature_statistics.is_numberlike_count_dict[(cur_tag)] >= 5):
+                            self.is_numberlike_dict[(cur_tag)] = self.n_total_features + self.n_is_numberlike
+                            self.n_is_numberlike += 1
+        self.n_total_features = self.n_total_features + self.n_is_numberlike
+        print("tom", self.is_numberlike_dict.values())
     # --- ADD YOURE CODE BELOW --- #
 
 
@@ -634,7 +908,7 @@ $$History = (W_{cur}, T_{prev}, T_{next}, T_{cur}, W_{prev}, W_{next}) $$
 def represent_input_with_features(history, feature2id):
     """
         Extract feature vector in per a given history
-        :param history: touple{word, pptag, ptag, ctag, nword, pword, pptag, ppword, nnword}
+        :param history: touple{word, pptag, ptag, ctag, nword, pword, pptag, ppword, nnword, nnnword}
         :param word_tags_dict: word\tag dict
             Return a list with all features that are relevant to the given history
     """
@@ -647,6 +921,7 @@ def represent_input_with_features(history, feature2id):
     pptag = history[6]
     ppword = history[7]
     nnword = history[8]
+    nnnword = history[9]
     features = []
 
     # word-tag
@@ -654,14 +929,27 @@ def represent_input_with_features(history, feature2id):
         features.append(feature2id.words_tags_dict[(word, ctag)])
 
     # prefix-tag
-    for i in range(min(4, len(word))):
-        if (word[:i + 1], ctag) in feature2id.prefix_tag_dict:
-            features.append(feature2id.prefix_tag_dict[(word[:i + 1], ctag)])
+    length = len(word)
+    if length>4:
+        for i in range(4):
+            if (word[:i + 1], ctag) in feature2id.prefix_tag_dict:
+                features.append(feature2id.prefix_tag_dict[(word[:i + 1], ctag)])
+    else:
+        for i in range(length-1):
+            if (word[:i + 1], ctag) in feature2id.prefix_tag_dict:
+                features.append(feature2id.prefix_tag_dict[(word[:i + 1], ctag)])
+
 
     # suffix-tag
-    for i in range(min(4, len(word))):
-        if (word[-i - 1:], ctag) in feature2id.suffix_tag_dict:
-            features.append(feature2id.suffix_tag_dict[(word[-i - 1:], ctag)])
+    if length>4:
+        for i in range(4):
+            if (word[-i - 1:], ctag) in feature2id.suffix_tag_dict:
+                features.append(feature2id.suffix_tag_dict[(word[-i - 1:], ctag)])
+    else:
+        for i in range(length-1):
+            if (word[-i - 1:], ctag) in feature2id.suffix_tag_dict:
+                features.append(feature2id.suffix_tag_dict[(word[-i - 1:], ctag)])
+
 
     # trigram tags
     if (pptag, ptag, ctag) in feature2id.trigram_tags_dict:
@@ -700,6 +988,35 @@ def represent_input_with_features(history, feature2id):
     # next next word current tag
     if (nnword, ctag) in feature2id.next_next_word_tag_dict:
         features.append(feature2id.next_next_word_tag_dict[(nnword, ctag)])
+
+    # is hyphen tags
+    if '-' in word:
+        if (ctag) in feature2id.is_hyphen_dict:
+            features.append(feature2id.is_hyphen_dict[(ctag)])
+
+    # is company tags
+    if (word[0].isupper()) and (nword in ["Co.", "Inc."] or nnword in ["Co.", "Inc."] or nnnword in ["Co.", "Inc."]):
+        if (ctag) in feature2id.is_company_dict:
+            features.append(feature2id.is_company_dict[(ctag)])
+
+    # is allcaps tags
+    if all(char.isupper() for char in word):
+        if (ctag) in feature2id.is_allcaps_dict:
+            features.append(feature2id.is_allcaps_dict[(ctag)])
+
+    # is capitalized number dash tags
+    if any(char.isupper() for char in word) and any(char.isdigit() for char in word) \
+            and any(char == '-' for char in word):
+        if (ctag) in feature2id.is_capitalized_number_dash_dict:
+            features.append(feature2id.is_capitalized_number_dash_dict[(ctag)])
+
+    # is numberlike tags
+    numberlike = ["two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "tens" \
+        , "eleven", "twelve", "hundred", "hundreds", "thousand", "thousands"]
+    if word in numberlike:
+        print(word)
+        if (ctag) in feature2id.is_numberlike_dict:
+            features.append(feature2id.is_numberlike_dict[(ctag)])
 
     return features
 
@@ -742,19 +1059,27 @@ class word_feature_class():
                         ntag = "STOP"
                         nword = "STOP"
                         nnword = "STOP"
+                        nnnword = "STOP"
                     elif word_idx == length-2:
                         ntag = split_word_tag(split_words[word_idx+1])[1]
                         nword = split_word_tag(split_words[word_idx+1])[0]
                         nnword = "STOP"
+                        nnnword = "STOP"
+                    elif word_idx == length-3:
+                        ntag = split_word_tag(split_words[word_idx+1])[1]
+                        nword = split_word_tag(split_words[word_idx+1])[0]
+                        nnword = split_word_tag(split_words[word_idx + 2])[0]
+                        nnnword = "STOP"
                     else:
                         ntag = split_word_tag(split_words[word_idx+1])[1]
                         nword = split_word_tag(split_words[word_idx+1])[0]
                         nnword = split_word_tag(split_words[word_idx + 2])[0]
-                    history = (word, ptag, ntag, ctag, pword, nword, pptag, ppword, nnword)
+                        nnnword = split_word_tag(split_words[word_idx + 3])[0]
+                    history = (word, ptag, ntag, ctag, pword, nword, pptag, ppword, nnword, nnnword)
                     self.word_features_list.append((word, ctag, represent_input_with_features(history, self.feature2id)))
                     word_features_per_tag = []
                     for tag in self.tags_list:
-                        history = (word, ptag, ntag, tag, pword, nword, pptag, ppword, nnword)
+                        history = (word, ptag, ntag, tag, pword, nword, pptag, ppword, nnword, nnnword)
                         word_features_per_tag.append(represent_input_with_features(history, self.feature2id))
                     self.word_tags_features_list.append((word, word_features_per_tag))
 
@@ -852,6 +1177,14 @@ class OpTyTagger():
         self.statistics.get_next_word_tag_count()
         self.statistics.get_pre_pre_word_tag_count()
         self.statistics.get_next_next_word_tag_count()
+        self.statistics.get_is_hyphen_count()
+        self.statistics.get_is_company_count()
+        self.statistics.get_is_allcaps_count()
+        self.statistics.get_is_capitalized_number_dash_count()
+        self.statistics.get_is_numberlike_count()
+
+
+
 
 
 
@@ -868,6 +1201,12 @@ class OpTyTagger():
         self.feature2id.get_next_word_tag_pairs()
         self.feature2id.get_pre_pre_word_tag_pairs()
         self.feature2id.get_next_next_word_tag_pairs()
+        self.feature2id.get_is_hyphen_pairs()
+        self.feature2id.get_is_allcaps_pairs()
+        self.feature2id.get_is_capitalized_number_dash_pairs()
+        self.feature2id.get_is_numberlike_pairs()
+
+
 
 
 
@@ -889,12 +1228,12 @@ class OpTyTagger():
     def fit(self):
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float64)
         # self.w_0 = np.random.normal(0, 0.01, self.feature2id.n_total_features) # TODO: is it a good init?
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=150, iprint=1)
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=200, iprint=1)
         self.weights = self.optimal_params[0]
         #print(self.weights)
 
 if __name__ == '__main__':
-    train = False
+    train = True
 
     if train:
         model_a = OpTyTagger()
@@ -902,7 +1241,7 @@ if __name__ == '__main__':
         with open('OpTyTagger{}.pkl'.format(time), 'wb') as pickle_file:
             pickle.dump(model_a, pickle_file)
     else:
-        with open('OpTyTagger20200510-125034.pkl', 'rb') as pickle_file:
+        with open('OpTyTagger20200514-234512.pkl', 'rb') as pickle_file:
             model_a = pickle.load(pickle_file)
             print(len(model_a.weights))
         print("viterbi")
