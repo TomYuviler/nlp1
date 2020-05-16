@@ -168,6 +168,7 @@ class Viterbi():
             i = 0
             for line in f:
                 print(i)
+                print(i)
                 if i==2:
                    break
                 i+=1

@@ -1200,7 +1200,7 @@ class OpTyTagger():
     def fit(self):
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float64)
         # self.w_0 = np.random.normal(0, 0.01, self.feature2id.n_total_features) # TODO: is it a good init?
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=2,
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=5,
                                             iprint=1)
         self.weights = self.optimal_params[0]
         # print(self.weights)
@@ -1227,7 +1227,7 @@ if __name__ == '__main__':
 
     if cross_val:
         acc = []
-        for fold in CrossValidation.k_fold('train2.wtag', 2):
+        for fold in CrossValidation.k_fold('train2.wtag', 50):
             model_a = OpTyTagger('train.wtag')
             model_a.fit()
             viterbi_1 = viterbi.Viterbi(model_a)

@@ -1,7 +1,3 @@
-import numpy as np
-import re
-import math
-
 
 def get_num_of_sentences(file_path):
     with open(file_path) as f:
@@ -31,7 +27,7 @@ def k_fold(file_path, k):
             with open('test.wtag', 'w') as test_file:
                 test_file.writelines(data[i - block_size:i])
                 print(i)
-                yield
+            yield
             i = i + block_size
 
 
