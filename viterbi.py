@@ -3,6 +3,8 @@ import nlp1
 import re
 import math
 import sys
+import tools
+#from openpyxl import *
 np.set_printoptions(threshold=sys.maxsize)
 
 class Viterbi():
@@ -25,6 +27,7 @@ class Viterbi():
         self.num_of_tags = len(self.tags_list)
         self.tags_pairs = [(x, y) for x in self.tags_list for y in self.tags_list]
         self.tags_pair_pos = {(pair[0], pair[1]): i for i, pair in enumerate(self.tags_pairs)}
+        self.all_words=[]
 
     def get_history(self, v, t, u, sentence, k):
         """ Returns the history vector for the requested word in a certain sentence.
@@ -39,16 +42,16 @@ class Viterbi():
             Returns:
                 A history vector (list of strings): (word, ptag, ntag, ctag, pword, nword, pptag).
         """
-        split_words = sentence + ['STOP'] + ['STOP']
+        split_words = sentence + ['STOP'] + ['STOP'] + ['STOP']
         pptag = t
         ptag = u
         ctag = v
-        ppword, pword, word, nword, nnword = split_words[k-2:k+3]
+        ppword, pword, word, nword, nnword, nnnword = split_words[k-2:k+4]
         ntag = ' '  # TODO: deal with it - right now it's just a random word u chose.
-        current_history = (word, ptag, ntag, ctag, pword, nword, pptag, ppword, nnword)
+        current_history = (word, ptag, ntag, ctag, pword, nword, pptag, ppword, nnword, nnnword)
         other_histories = []
         for tag in self.model.tags_list:
-            other_histories.append((word, ptag, ntag, tag, pword, nword, pptag, ppword, nnword))
+            other_histories.append((word, ptag, ntag, tag, pword, nword, pptag, ppword, nnword, nnnword))
 
         return current_history, other_histories
 
@@ -162,25 +165,48 @@ class Viterbi():
             i = 0
             for line in f:
                 print(i)
-                if i==250:
-                    break
+                #if i==100:
+                   #break
                 i+=1
                 split_words = re.split(' |\n', line)
                 del split_words[-1]
                 for word_idx in range(len(split_words)):
                     cur_word, cur_tag = re.split('_', split_words[word_idx])
                     sentence.append(cur_word)
+                    self.all_words.append(cur_word)
                     real_tags.append(cur_tag)
 
                 pred_tags = self.run_viterbi(sentence, active_beam=True, beam_size=5)[2:]
                 for prediction in pred_tags:
                     predictions.append(prediction)
                 sentence = []
+
+        pred_dict ={}
+        for i in range (len(real_tags)):
+            if real_tags[i] == predictions[i]:
+                continue
+            if (real_tags[i],predictions[i]) in pred_dict:
+                pred_dict[(real_tags[i],predictions[i])] += 1
+            else:
+                pred_dict[(real_tags[i], predictions[i])] = 1
+        print(pred_dict)
         print(real_tags)
         print(predictions)
         if with_tags:
             print("The Accuracy is:", self.get_accuracy(real_tags, predictions))
-
+        tool = tools.SummeryTools(self.tags_list,real_tags,predictions,self.all_words)
+        conf = tool.get_confusion_matrix()
+        print(tool.get_most_common_mistakes_per_tag())
+        print("-------------------------------------------------------------------------------------")
+        print("-------------------------------------------------------------------------------------")
+        print("-------------------------------------------------------------------------------------")
+        print("-------------------------------------------------------------------------------------")
+        print("-------------------------------------------------------------------------------------")
+        print("-------------------------------------------------------------------------------------")
+        print("-------------------------------------------------------------------------------------")
+        #tool.get_most_common_mistakes_per_words().to_excel("output.xlsx",sheet_name='Sheet_name_1')
+        tool.get_most_common_mistakes_per_words().to_csv("tom.csv",index=True)
+        print(tool.get_most_common_mistakes_per_words())
 
 
 if __name__ == '__main__':
