@@ -1160,7 +1160,7 @@ def calc_objective_per_iter(w_i, word_features_list, word_tags_features_list, nu
 # Statistics
 class OpTyTagger():
     def __init__(self, file_path=None):
-        self.threshold = 1
+        self.threshold = 2
         self.lamda = 1
         self.statistics = feature_statistics_class('train1.wtag')
         self.feature2id = feature2id_class(self.statistics, self.threshold, 'train1.wtag')
@@ -1228,7 +1228,7 @@ class OpTyTagger():
     def fit(self):
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float64)
         # self.w_0 = np.random.normal(0, 0.01, self.feature2id.n_total_features) # TODO: is it a good init?
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=200, iprint=1)
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=120, iprint=1)
         self.weights = self.optimal_params[0]
         #print(self.weights)
 
@@ -1241,7 +1241,7 @@ if __name__ == '__main__':
         with open('OpTyTagger{}.pkl'.format(time), 'wb') as pickle_file:
             pickle.dump(model_a, pickle_file)
     else:
-        with open('OpTyTagger20200514-234512.pkl', 'rb') as pickle_file:
+        with open('OpTyTagger20200515-235549.pkl', 'rb') as pickle_file:
             model_a = pickle.load(pickle_file)
             print(len(model_a.weights))
         print("viterbi")
