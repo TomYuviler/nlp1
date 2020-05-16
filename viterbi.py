@@ -3,22 +3,19 @@ import nlp1
 import re
 import math
 import sys
+from CrossValidation import get_num_of_sentences
 import tools
 #from openpyxl import *
 np.set_printoptions(threshold=sys.maxsize)
 
 class Viterbi():
-    """ Viterbi algorithm implementation
+    """ A Viterbi algorithm implementation.
 
-        Args: A trained OpTyTagger object (MEMM Tagger)
+        Args:
+            model: A trained OpTyTagger object (MEMM Tagger)
 
         Attributes:
             model (OpTyTagger Object):
-            tags_list (list of strings):
-            num_of_tags (int):
-            tags_pairs (list of strings tuples):
-            tags_pair_pos (dict):
-
     """
 
     def __init__(self, model):
@@ -27,7 +24,7 @@ class Viterbi():
         self.num_of_tags = len(self.tags_list)
         self.tags_pairs = [(x, y) for x in self.tags_list for y in self.tags_list]
         self.tags_pair_pos = {(pair[0], pair[1]): i for i, pair in enumerate(self.tags_pairs)}
-        self.all_words=[]
+        self.all_words = []
 
     def get_history(self, v, t, u, sentence, k):
         """ Returns the history vector for the requested word in a certain sentence.
@@ -165,15 +162,19 @@ class Viterbi():
             f.write('')
 
         with open(file_path) as f:
+            num_of_sentences = get_num_of_sentences(file_path)
             i = 0
             for line in f:
+                i += 1
                 print(i)
-                print(i)
-                if i==2:
-                   break
-                i+=1
                 split_words = re.split(' |\n', line)
-                del split_words[-1]
+
+                if file_path == 'test.wtag':
+                    if i < num_of_sentences+1:
+                        del split_words[-1]
+                else:
+                    if i < num_of_sentences:
+                        del split_words[-1]
 
                 for word_idx in range(len(split_words)):
                     if with_tags:
@@ -197,34 +198,19 @@ class Viterbi():
                     predictions.append(prediction)
                 sentence = []
 
-        pred_dict ={}
-        for i in range (len(real_tags)):
+        pred_dict = {}
+        for i in range(len(real_tags)):
             if real_tags[i] == predictions[i]:
                 continue
             if (real_tags[i],predictions[i]) in pred_dict:
                 pred_dict[(real_tags[i],predictions[i])] += 1
             else:
                 pred_dict[(real_tags[i], predictions[i])] = 1
-        # print(pred_dict)
-        # print(real_tags)
-        # print(predictions)
+        print(real_tags)
         if with_tags:
             accuracy = self.get_accuracy(real_tags, predictions)
             print("The Accuracy is:", accuracy)
             return accuracy
-        # tool = tools.SummeryTools(self.tags_list,real_tags,predictions,self.all_words)
-        # conf = tool.get_confusion_matrix()
-        # print(tool.get_most_common_mistakes_per_tag())
-        # print("-------------------------------------------------------------------------------------")
-        # print("-------------------------------------------------------------------------------------")
-        # print("-------------------------------------------------------------------------------------")
-        # print("-------------------------------------------------------------------------------------")
-        # print("-------------------------------------------------------------------------------------")
-        # print("-------------------------------------------------------------------------------------")
-        # print("-------------------------------------------------------------------------------------")
-        # #tool.get_most_common_mistakes_per_words().to_excel("output.xlsx",sheet_name='Sheet_name_1')
-        # tool.get_most_common_mistakes_per_words().to_csv("tom1.csv",index=True)
-        # print(tool.get_most_common_mistakes_per_words())
 
 
 if __name__ == '__main__':

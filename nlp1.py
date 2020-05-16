@@ -1199,11 +1199,9 @@ class OpTyTagger():
 
     def fit(self):
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float64)
-        # self.w_0 = np.random.normal(0, 0.01, self.feature2id.n_total_features) # TODO: is it a good init?
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=5,
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=150,
                                             iprint=1)
         self.weights = self.optimal_params[0]
-        # print(self.weights)
 
 
 if __name__ == '__main__':
@@ -1223,7 +1221,6 @@ if __name__ == '__main__':
             print("viterbi")
             viterbi_1 = viterbi.Viterbi(model_a)
             viterbi_1.viterbi_that_file('comp1.words', with_tags=False)
-
 
     if cross_val:
         acc = []
