@@ -161,22 +161,37 @@ class Viterbi():
         real_tags = []
         sentence = []
 
+        with open('result.wtag', 'w') as f:
+            f.write('')
+
         with open(file_path) as f:
             i = 0
             for line in f:
                 print(i)
-                #if i==100:
-                   #break
+                if i==2:
+                   break
                 i+=1
                 split_words = re.split(' |\n', line)
                 del split_words[-1]
+
                 for word_idx in range(len(split_words)):
-                    cur_word, cur_tag = re.split('_', split_words[word_idx])
+                    if with_tags:
+                        cur_word, cur_tag = re.split('_', split_words[word_idx])
+                    else:
+                        cur_word = split_words[word_idx]
+
                     sentence.append(cur_word)
                     self.all_words.append(cur_word)
-                    real_tags.append(cur_tag)
+                    if with_tags:
+                        real_tags.append(cur_tag)
 
                 pred_tags = self.run_viterbi(sentence, active_beam=True, beam_size=5)[2:]
+
+                with open('result.wtag', 'a') as f:
+                    for word, pred_tag in zip(sentence, pred_tags):
+                        f.write("{}_{} ".format(word, pred_tag))
+                    f.write("\n")
+
                 for prediction in pred_tags:
                     predictions.append(prediction)
                 sentence = []
@@ -189,24 +204,26 @@ class Viterbi():
                 pred_dict[(real_tags[i],predictions[i])] += 1
             else:
                 pred_dict[(real_tags[i], predictions[i])] = 1
-        print(pred_dict)
-        print(real_tags)
-        print(predictions)
+        # print(pred_dict)
+        # print(real_tags)
+        # print(predictions)
         if with_tags:
-            print("The Accuracy is:", self.get_accuracy(real_tags, predictions))
-        tool = tools.SummeryTools(self.tags_list,real_tags,predictions,self.all_words)
-        conf = tool.get_confusion_matrix()
-        print(tool.get_most_common_mistakes_per_tag())
-        print("-------------------------------------------------------------------------------------")
-        print("-------------------------------------------------------------------------------------")
-        print("-------------------------------------------------------------------------------------")
-        print("-------------------------------------------------------------------------------------")
-        print("-------------------------------------------------------------------------------------")
-        print("-------------------------------------------------------------------------------------")
-        print("-------------------------------------------------------------------------------------")
-        #tool.get_most_common_mistakes_per_words().to_excel("output.xlsx",sheet_name='Sheet_name_1')
-        tool.get_most_common_mistakes_per_words().to_csv("tom1.csv",index=True)
-        print(tool.get_most_common_mistakes_per_words())
+            accuracy = self.get_accuracy(real_tags, predictions)
+            print("The Accuracy is:", accuracy)
+            return accuracy
+        # tool = tools.SummeryTools(self.tags_list,real_tags,predictions,self.all_words)
+        # conf = tool.get_confusion_matrix()
+        # print(tool.get_most_common_mistakes_per_tag())
+        # print("-------------------------------------------------------------------------------------")
+        # print("-------------------------------------------------------------------------------------")
+        # print("-------------------------------------------------------------------------------------")
+        # print("-------------------------------------------------------------------------------------")
+        # print("-------------------------------------------------------------------------------------")
+        # print("-------------------------------------------------------------------------------------")
+        # print("-------------------------------------------------------------------------------------")
+        # #tool.get_most_common_mistakes_per_words().to_excel("output.xlsx",sheet_name='Sheet_name_1')
+        # tool.get_most_common_mistakes_per_words().to_csv("tom1.csv",index=True)
+        # print(tool.get_most_common_mistakes_per_words())
 
 
 if __name__ == '__main__':
