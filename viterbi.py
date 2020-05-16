@@ -205,7 +205,7 @@ class Viterbi():
         print("-------------------------------------------------------------------------------------")
         print("-------------------------------------------------------------------------------------")
         #tool.get_most_common_mistakes_per_words().to_excel("output.xlsx",sheet_name='Sheet_name_1')
-        tool.get_most_common_mistakes_per_words().to_csv("tom.csv",index=True)
+        tool.get_most_common_mistakes_per_words().to_csv("tom1.csv",index=True)
         print(tool.get_most_common_mistakes_per_words())
 
 
