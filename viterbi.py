@@ -154,8 +154,9 @@ class Viterbi():
         predictions = []
         real_tags = []
         sentence = []
+        result_path = 'tagged_'+file_path
 
-        with open('result.wtag', 'w') as f:
+        with open(result_path, 'w') as f:
             f.write('')
 
         with open(file_path) as f:
@@ -186,10 +187,14 @@ class Viterbi():
 
                 pred_tags = self.run_viterbi(sentence, active_beam=True, beam_size=5)[2:]
 
-                with open('result.wtag', 'a') as f:
+                with open(result_path, 'a') as f:
+                    curr_line = ""
                     for word, pred_tag in zip(sentence, pred_tags):
-                        f.write("{}_{} ".format(word, pred_tag))
-                    f.write("\n")
+                        curr_line = curr_line + "{}_{} ".format(word, pred_tag)
+                    curr_line = curr_line[:-1]
+                    f.writelines(curr_line)
+                    if i < num_of_sentences:
+                        f.write("\n")
 
                 for prediction in pred_tags:
                     predictions.append(prediction)
