@@ -1,6 +1,7 @@
 
 def get_num_of_sentences(file_path):
-    """Returns the number of sentences in the file"""
+    """Returns the number of sentences in the file."""
+
     with open(file_path) as f:
         for i, l in enumerate(f):
             pass
@@ -18,12 +19,10 @@ def k_fold(file_path, k):
 
     num_of_sentences = get_num_of_sentences(file_path)
     block_size = int(num_of_sentences/k)
-    print(block_size)
     with open(file_path) as f:
         data = f.readlines()
         i = block_size
         while i <= num_of_sentences:
-            print("33333")
             with open('train.wtag', 'w') as train_file:
                 if i == block_size:
                     train_file.writelines(data[i:])

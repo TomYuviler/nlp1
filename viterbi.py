@@ -2,14 +2,11 @@ import numpy as np
 import nlp1
 import re
 import math
-import sys
 from CrossValidation import get_num_of_sentences
-import tools
-#from openpyxl import *
-np.set_printoptions(threshold=sys.maxsize)
+
 
 class Viterbi():
-    """ A Viterbi algorithm implementation.
+    """ A Viterbi algorithm implementation for the inference of the OpTy MEMM tagger.
 
         Args:
             model: A trained OpTyTagger object (MEMM Tagger)
@@ -209,7 +206,6 @@ class Viterbi():
         print(real_tags)
         if with_tags:
             accuracy = self.get_accuracy(real_tags, predictions)
-            print("The Accuracy is:", accuracy)
             return accuracy
 
 

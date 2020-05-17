@@ -1,13 +1,11 @@
 import seaborn as sn
-from matplotlib import pyplot as plt
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 class SummeryTools:
     """
-    Contains analytics functions for the result of a OpTy MEMM POS tagger.
+    Contains functions for analytics on the result of a OpTy MEMM POS tagger.
     """
 
     def __init__(self, tags_list, true_tags, predicted_tags, sentence):
@@ -26,13 +24,13 @@ class SummeryTools:
         self.confusion_matrix = pd.DataFrame(0, index=self.tags_list, columns=self.tags_list)
 
     def get_most_common_mistakes_per_tag(self):
-        """"""
+        """Returns a table with all the tags and their most common mistake prediction"""
+
         confusion_matrix = pd.DataFrame.copy(self.confusion_matrix)
 
         for tag in self.tags_list:
             confusion_matrix.at[tag, tag] = -1
 
-        # common_mistake_per_tag = confusion_matrix.idxmax(axis=1)
         common_mistake_per_tag = pd.concat([confusion_matrix.idxmax(axis=1), confusion_matrix.max(axis=1)], axis=1)
         common_mistake_per_tag.columns = ["wrong predicted tag", "num of occurrences"]
         common_mistake_per_tag = common_mistake_per_tag.sort_values(by=["num of occurrences"], ascending=False)
@@ -40,6 +38,8 @@ class SummeryTools:
         return common_mistake_per_tag
 
     def get_most_common_mistakes_per_words(self):
+        """Returns a table with all the real (word, tag) pairs and their most common mistake prediction"""
+
         word_true_tag_list = [(word, true_tag) for word, true_tag in zip(self.sentence, self.true_tags)]
         confusion_matrix = pd.DataFrame(0, index=set(word_true_tag_list), columns=self.tags_list)
 
@@ -48,6 +48,7 @@ class SummeryTools:
 
         for word_true_tag in word_true_tag_list:
             confusion_matrix.at[word_true_tag, word_true_tag[1]] = -1
+
         common_mistake_per_word = pd.concat([confusion_matrix.idxmax(axis=1), confusion_matrix.max(axis=1)], axis=1)
         common_mistake_per_word.columns = ["wrong predicted tag", "num of occurrences"]
         common_mistake_per_word = common_mistake_per_word.sort_values(by=["num of occurrences"], ascending=False)
@@ -55,16 +56,20 @@ class SummeryTools:
         return common_mistake_per_word
 
     def get_confusion_matrix(self):
+        """Returns a full confusion matrix of the true and the predicted tags."""
+
         for true_tag, predicted_tag in zip(self.true_tags, self.predicted_tags):
             self.confusion_matrix.at[true_tag, predicted_tag] = self.confusion_matrix.at[true_tag, predicted_tag] + 1
 
         return pd.DataFrame.copy(self.confusion_matrix)
 
     def get_top10_confusion_matrix(self):
+        """ Return a confusion matrix of the top 10 most mistakable true tags."""
+
         confusion_matrix = pd.DataFrame.copy(self.confusion_matrix)
 
         for tag in self.tags_list:
-            confusion_matrix.at[tag, tag] = 0 # TODO: maybe you should bring it back after the sum
+            confusion_matrix.at[tag, tag] = 0
 
         top10_tags = confusion_matrix.sum(axis=1).sort_values(ascending=False).head(10)
         confusion_matrix = confusion_matrix.loc[top10_tags.index]
