@@ -72,6 +72,8 @@ class feature_statistics_class():
         self.is_allcaps_count_dict = OrderedDict()
         self.is_capitalized_number_dash_count_dict = OrderedDict()
         self.is_numberlike_count_dict = OrderedDict()
+        self.lowercase_words_tags_count_dict = OrderedDict()
+
 
     def get_word_tag_pair_count(self):
         """
@@ -419,6 +421,22 @@ class feature_statistics_class():
                         else:
                             self.is_numberlike_count_dict[(cur_tag)] += 1
 
+    def get_lowercase_word_tag_pair_count(self):
+        """
+            Extract out of text all lowercase word/tag pairs
+                return all word/tag pairs with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    cur_word = cur_word.lower()
+                    if (cur_word, cur_tag) not in self.lowercase_words_tags_count_dict:
+                        self.lowercase_words_tags_count_dict[(cur_word, cur_tag)] = 1
+                    else:
+                        self.lowercase_words_tags_count_dict[(cur_word, cur_tag)] += 1
     # --- ADD YOURE CODE BELOW --- #
 
 
@@ -452,6 +470,8 @@ class feature2id_class():
         self.n_is_allcaps = 0
         self.n_is_capitalized_number_dash = 0
         self.n_is_numberlike = 0
+        self.n_lowercase_tag_pairs = 0
+
 
         # Init all features dictionaries
         self.words_tags_dict = OrderedDict()
@@ -471,6 +491,8 @@ class feature2id_class():
         self.is_allcaps_dict = OrderedDict()
         self.is_capitalized_number_dash_dict = OrderedDict()
         self.is_numberlike_dict = OrderedDict()
+        self.lowercase_words_tags_dict = OrderedDict()
+
 
     def get_word_tag_pairs(self):
         """
@@ -852,6 +874,26 @@ class feature2id_class():
         self.n_total_features = self.n_total_features + self.n_is_numberlike
 
 
+    def get_lowercase_word_tag_pairs(self):
+        """
+            Extract out of text all lowercase word/tag pairs
+            :param file_path: full path of the file to read
+                return all word/tag pairs with index of appearance
+        """
+        with open(self.file_path) as f:
+            for line in f:
+                split_words = split_line(line)
+                del split_words[-1]
+                for word_idx in range(len(split_words)):
+                    cur_word, cur_tag = split_word_tag(split_words[word_idx])
+                    cur_word = cur_word.lower()
+                    if ((cur_word, cur_tag) not in self.lowercase_words_tags_dict) \
+                        and (self.feature_statistics.lowercase_words_tags_count_dict[(cur_word, cur_tag)] >= self.threshold):
+                        self.lowercase_words_tags_dict[(cur_word, cur_tag)] = self.n_total_features + self.n_lowercase_tag_pairs
+                        self.n_lowercase_tag_pairs += 1
+                        print(self.n_lowercase_tag_pairs)
+        self.n_total_features += self.n_lowercase_tag_pairs
+        print(self.lowercase_words_tags_dict.values())
 """### Representing input data with features 
 After deciding which features to use, we can represent input tokens as sparse feature vectors. This way, a token is
 represented with a vec with a dimension D, where D is the total amount of features. \
@@ -973,6 +1015,10 @@ def represent_input_with_features(history, feature2id):
     if word in numberlike:
         if (ctag) in feature2id.is_numberlike_dict:
             features.append(feature2id.is_numberlike_dict[(ctag)])
+
+    # lowercase word-tag
+    if (word.lower(), ctag) in feature2id.words_tags_dict:
+        features.append(feature2id.words_tags_dict[(word.lower(), ctag)])
 
     return features
 
@@ -1145,6 +1191,8 @@ class OpTyTagger:
         self.statistics.get_is_allcaps_count()
         self.statistics.get_is_capitalized_number_dash_count()
         self.statistics.get_is_numberlike_count()
+        self.statistics.get_lowercase_word_tag_pair_count()
+
 
         self.feature2id.get_word_tag_pairs()
         self.feature2id.get_prefix_tag_pairs()
@@ -1162,6 +1210,8 @@ class OpTyTagger:
         self.feature2id.get_is_allcaps_pairs()
         self.feature2id.get_is_capitalized_number_dash_pairs()
         self.feature2id.get_is_numberlike_pairs()
+        self.feature2id.get_lowercase_word_tag_pairs()
+
 
         self.word_features = word_feature_class(self.feature2id, file_path, self.tags_list)
         self.word_features.find_relevant_features()

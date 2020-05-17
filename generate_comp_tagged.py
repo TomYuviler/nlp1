@@ -44,10 +44,10 @@ def generate_tagged_comp():
     print("Running Viterbi")
     viterbi_1 = viterbi.Viterbi(model_b)
     print("Tagging comp2...")
-    viterbi_1.viterbi_that_file('comp1.words')
+    viterbi_1.viterbi_that_file('comp2.words')
 
 
 if __name__ == '__main__':
 
     generate_tagged_comp()
-    strip_tagged_file('tagged_comp1.words')
+    #strip_tagged_file('tagged_comp1.words')
