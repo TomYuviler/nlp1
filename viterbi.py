@@ -200,14 +200,7 @@ class Viterbi():
                     predictions.append(prediction)
                 sentence = []
 
-        pred_dict = {}
-        for i in range(len(real_tags)):
-            if real_tags[i] == predictions[i]:
-                continue
-            if (real_tags[i],predictions[i]) in pred_dict:
-                pred_dict[(real_tags[i],predictions[i])] += 1
-            else:
-                pred_dict[(real_tags[i], predictions[i])] = 1
+
         if with_tags:
             accuracy = self.get_accuracy(real_tags, predictions)
             return accuracy
