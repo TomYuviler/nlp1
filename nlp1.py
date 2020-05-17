@@ -891,9 +891,7 @@ class feature2id_class():
                         and (self.feature_statistics.lowercase_words_tags_count_dict[(cur_word, cur_tag)] >= self.threshold):
                         self.lowercase_words_tags_dict[(cur_word, cur_tag)] = self.n_total_features + self.n_lowercase_tag_pairs
                         self.n_lowercase_tag_pairs += 1
-                        print(self.n_lowercase_tag_pairs)
         self.n_total_features += self.n_lowercase_tag_pairs
-        print(self.lowercase_words_tags_dict.values())
 """### Representing input data with features 
 After deciding which features to use, we can represent input tokens as sparse feature vectors. This way, a token is
 represented with a vec with a dimension D, where D is the total amount of features. \
@@ -1169,7 +1167,7 @@ class OpTyTagger:
             file_path(str): The path for the requested text file to tag.
         """
 
-        self.threshold = 2
+        self.threshold = 1
         self.lamda = 1
         self.statistics = feature_statistics_class(file_path)
         self.feature2id = feature2id_class(self.statistics, self.threshold, file_path)
@@ -1227,7 +1225,7 @@ class OpTyTagger:
 
     def fit(self):
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float64)
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=150,
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=120,
                                             iprint=1)
         self.weights = self.optimal_params[0]
 
@@ -1241,7 +1239,7 @@ def main(mode='train', file_path='train1.wtag', _with_tags=True):
             pickle.dump(model_a, pickle_file)
 
     if mode == 'test':
-        with open('OpTyTagger20200517-090011.pkl', 'rb') as pickle_file:
+        with open('OpTyTagger20200517-102947.pkl', 'rb') as pickle_file:
             model_a = pickle.load(pickle_file)
         print("Running Viterbi")
         viterbi_1 = viterbi.Viterbi(model_a)
@@ -1251,7 +1249,7 @@ def main(mode='train', file_path='train1.wtag', _with_tags=True):
 
     if mode == 'cross_val':
         acc = []
-        for fold in CrossValidation.k_fold(file_path, 50):
+        for fold in CrossValidation.k_fold(file_path, 10):
             model_a = OpTyTagger('train.wtag')
             model_a.fit()
             viterbi_1 = viterbi.Viterbi(model_a)
