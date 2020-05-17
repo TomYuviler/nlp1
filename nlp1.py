@@ -1196,7 +1196,8 @@ def main(mode='train', file_path='train1.wtag', _with_tags=True):
         print("Running Viterbi")
         viterbi_1 = viterbi.Viterbi(model_a)
         accuracy = viterbi_1.viterbi_that_file(file_path, with_tags=_with_tags)
-        print("The accuracy is:", accuracy)
+        if _with_tags:
+            print("The accuracy is:", accuracy)
 
     if mode == 'cross_val':
         acc = []
@@ -1204,7 +1205,7 @@ def main(mode='train', file_path='train1.wtag', _with_tags=True):
             model_a = OpTyTagger('train.wtag')
             model_a.fit()
             viterbi_1 = viterbi.Viterbi(model_a)
-            acc.append(viterbi_1.viterbi_that_file('test.wtag', with_tags=_with_tags))
+            acc.append(viterbi_1.viterbi_that_file('test.wtag', True))
         print("The average accuracy is:", sum(acc)/len(acc))
 
 if __name__ == '__main__':
