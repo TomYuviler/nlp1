@@ -96,8 +96,8 @@ class Viterbi():
         for i in range(n):
             num_of_correct = num_of_correct + (real_tags[i] == predicted[i])
 
-        print("num of words:", n)
-        print("num of correct tags:", num_of_correct)
+        # print("num of words:", n)
+        # print("num of correct tags:", num_of_correct)
 
         return float(num_of_correct)/n
 
@@ -163,7 +163,7 @@ class Viterbi():
             i = 0
             for line in f:
                 i += 1
-                print(i)
+                print('Running on line ', i)
                 split_words = re.split(' |\n', line)
 
                 if file_path == 'test.wtag':
@@ -203,7 +203,6 @@ class Viterbi():
                 pred_dict[(real_tags[i],predictions[i])] += 1
             else:
                 pred_dict[(real_tags[i], predictions[i])] = 1
-        print(real_tags)
         if with_tags:
             accuracy = self.get_accuracy(real_tags, predictions)
             return accuracy

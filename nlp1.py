@@ -6,12 +6,14 @@ from scipy.optimize import fmin_l_bfgs_b
 import viterbi
 import pickle
 from datetime import datetime
+import time
 from scipy.special import logsumexp
 from scipy.special import softmax
 import CrossValidation
 import sys
+
 now = datetime.now()
-time = now.strftime("%Y%m%d-%H%M%S")
+date_time = now.strftime("%Y%m%d-%H%M%S")
 
 
 # split line to list of word_tag
@@ -1175,22 +1177,21 @@ class OpTyTagger:
 
     def fit(self):
         self.w_0 = np.zeros(self.feature2id.n_total_features, dtype=np.float64)
-        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=2,
+        self.optimal_params = fmin_l_bfgs_b(func=calc_objective_per_iter, x0=self.w_0, args=self.args, maxiter=150,
                                             iprint=1)
         self.weights = self.optimal_params[0]
 
-if __name__ == '__main__':
 
-    mode, file_path, _with_tags = sys.argv[1:]
+def main(mode='train', file_path='train1.wtag', _with_tags=True):
 
     if mode == 'train':
         model_a = OpTyTagger(file_path)
         model_a.fit()
-        with open('OpTyTagger{}.pkl'.format(time), 'wb') as pickle_file:
+        with open('OpTyTagger{}.pkl'.format(date_time), 'wb') as pickle_file:
             pickle.dump(model_a, pickle_file)
 
     if mode == 'test':
-        with open('OpTyTagger20200516-150953.pkl', 'rb') as pickle_file:
+        with open('OpTyTagger20200517-090011.pkl', 'rb') as pickle_file:
             model_a = pickle.load(pickle_file)
         print("Running Viterbi")
         viterbi_1 = viterbi.Viterbi(model_a)
@@ -1205,3 +1206,21 @@ if __name__ == '__main__':
             viterbi_1 = viterbi.Viterbi(model_a)
             acc.append(viterbi_1.viterbi_that_file('test.wtag', with_tags=_with_tags))
         print("The average accuracy is:", sum(acc)/len(acc))
+
+if __name__ == '__main__':
+
+    if len(sys.argv) == 4:
+        mode, file_path, _with_tags = sys.argv[1:]
+        start = time.time()
+        main(mode, file_path, _with_tags)
+        end = time.time()
+        print("It took {} seconds for the model to run in {} mode on {}".format(end-start, mode, file_path))
+        if mode != 'train':
+            print("You can find the results in the 'result.wtag' file.")
+    else:
+        start = time.time()
+        main()
+        end = time.time()
+        print("It took {} seconds for the model to run in train mode on train1.wtag".format(end-start))
+
+
