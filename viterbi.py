@@ -203,16 +203,17 @@ class Viterbi():
                     predictions.append(prediction)
                 sentence = []
 
-        tool = tools.SummeryTools(self.tags_list, real_tags, predictions, self.all_words)
-        tool.get_confusion_matrix()
-        tool.get_top10_confusion_matrix()
-        print("------------")
-        print("------------")
-        print(tool.get_most_common_mistakes_per_words())
-        print("------------")
-        print("------------")
-        print(tool.get_most_common_mistakes_per_tag())
+
         if with_tags:
+            tool = tools.SummeryTools(self.tags_list, real_tags, predictions, self.all_words)
+            tool.get_confusion_matrix()
+            tool.get_top10_confusion_matrix()
+            print("------------")
+            print("------------")
+            print(tool.get_most_common_mistakes_per_words())
+            print("------------")
+            print("------------")
+            print(tool.get_most_common_mistakes_per_tag())
             accuracy = self.get_accuracy(real_tags, predictions)
             return accuracy
 
