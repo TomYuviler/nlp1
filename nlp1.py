@@ -892,6 +892,8 @@ class feature2id_class():
                         self.lowercase_words_tags_dict[(cur_word, cur_tag)] = self.n_total_features + self.n_lowercase_tag_pairs
                         self.n_lowercase_tag_pairs += 1
         self.n_total_features += self.n_lowercase_tag_pairs
+
+
 """### Representing input data with features 
 After deciding which features to use, we can represent input tokens as sparse feature vectors. This way, a token is
 represented with a vec with a dimension D, where D is the total amount of features. \
@@ -1205,6 +1207,7 @@ class OpTyTagger:
         self.feature2id.get_pre_pre_word_tag_pairs()
         self.feature2id.get_next_next_word_tag_pairs()
         self.feature2id.get_is_hyphen_pairs()
+        self.feature2id.get_is_company_pairs()
         self.feature2id.get_is_allcaps_pairs()
         self.feature2id.get_is_capitalized_number_dash_pairs()
         self.feature2id.get_is_numberlike_pairs()
