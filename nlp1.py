@@ -78,7 +78,7 @@ class feature_statistics_class():
     def get_word_tag_pair_count(self):
         """
             Extract out of text all word/tag pairs
-                return all word/tag pairs "check"
+                return all word/tag pairs count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -94,7 +94,7 @@ class feature_statistics_class():
     def get_spelling_prefix_count(self):
         """
             Extract out of text all prefix/tag pairs
-                return all prefix/tag pairs with index of appearance
+                return all prefix/tag pairs count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -119,7 +119,7 @@ class feature_statistics_class():
     def get_spelling_suffix_count(self):
         """
             Extract out of text all suffix/tag pairs
-                return all suffix/tag pairs with index of appearance
+                return all suffix/tag pairs count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -144,7 +144,7 @@ class feature_statistics_class():
     def get_trigram_tags_count(self):
         """
             Extract out of text all trigrams tags
-                return all trigrams tags with index of appearance
+                return all trigrams tags count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -169,7 +169,7 @@ class feature_statistics_class():
     def get_bigram_tags_count(self):
         """
             Extract out of text all bigram tags
-                return all bigram tags with index of appearance
+                return all bigram tags count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -189,7 +189,7 @@ class feature_statistics_class():
     def get_unigram_tags_count(self):
         """
             Extract out of text all tags
-                return all tags with index of appearance
+                return all tags count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -205,7 +205,7 @@ class feature_statistics_class():
     def get_is_number_count(self):
         """
             Extract out of text all words that include number
-                return all tags with index of appearance
+                return all relevant tags  count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -222,7 +222,7 @@ class feature_statistics_class():
     def get_is_capital_count(self):
         """
             Extract out of text all words that include capital letter
-                return all tags with index of appearance
+                return all relevant count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -239,7 +239,7 @@ class feature_statistics_class():
     def get_previous_word_tag_count(self):
         """
             Extract out of text all previous word and current tag
-                return all previous words and current tags with index of appearance
+                return all previous words and current tags count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -259,7 +259,7 @@ class feature_statistics_class():
     def get_next_word_tag_count(self):
         """
             Extract out of text all next word and current tag
-                return all next words and current tags with index of appearance
+                return all next words and current tags count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -279,7 +279,7 @@ class feature_statistics_class():
     def get_pre_pre_word_tag_count(self):
         """
             Extract out of text all previous previous word and current tag
-                return all previous previous words and current tags with index of appearance
+                return all previous previous words and current tags count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -299,7 +299,7 @@ class feature_statistics_class():
     def get_next_next_word_tag_count(self):
         """
             Extract out of text next all next word and current tag
-                return all next next words and current tags with index of appearance
+                return all next next words and current tags counts
         """
         with open(self.file_path) as f:
             for line in f:
@@ -319,7 +319,7 @@ class feature_statistics_class():
     def get_is_hyphen_count(self):
         """
             Extract out of text all words that include hyphen(-)
-                return all tags with index of appearance
+                return all relevant tags counts
         """
         with open(self.file_path) as f:
             for line in f:
@@ -336,7 +336,7 @@ class feature_statistics_class():
     def get_is_company_count(self):
         """
             Extract out of text all words that include capitalized word followed by Inc. or Co.
-                return all tags with index of appearance
+                return all relevant tags counts
         """
         with open(self.file_path) as f:
             for line in f:
@@ -370,7 +370,7 @@ class feature_statistics_class():
     def get_is_allcaps_count(self):
         """
             Extract out of text all words that include only capital letter
-                return all tags with index of appearance
+                return all relevant tags count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -386,8 +386,8 @@ class feature_statistics_class():
 
     def get_is_capitalized_number_dash_count(self):
         """
-            Extract out of text all words that include only capital letters,_digits and dashes
-                return all tags with index of appearance
+            Extract out of text all words that include only capital letters,digits and dashes
+                return all relevant tags count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -404,8 +404,8 @@ class feature_statistics_class():
 
     def get_is_numberlike_count(self):
         """
-            Extract out of text all words that include numberlike
-                return all tags with index of appearance
+            Extract out of text all words that are numberlike
+                return all relevant tags count
         """
         with open(self.file_path) as f:
             numberlike = ["two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "tens" \
@@ -424,7 +424,7 @@ class feature_statistics_class():
     def get_lowercase_word_tag_pair_count(self):
         """
             Extract out of text all lowercase word/tag pairs
-                return all word/tag pairs with index of appearance
+                return all lowercase word/tag count
         """
         with open(self.file_path) as f:
             for line in f:
@@ -452,8 +452,9 @@ class feature2id_class():
         self.threshold = threshold  # feature count threshold - empirical count must be higher than this
         self.file_path = file_path
 
+        #number of features per type
         self.n_total_features = 0  # Total number of features accumulated
-        self.n_tag_pairs = 0  # Number of Word\Tag pairs features
+        self.n_tag_pairs = 0
         self.n_prefix_tag = 0
         self.n_suffix_tag = 0
         self.n_trigram_tags = 0
@@ -641,8 +642,8 @@ class feature2id_class():
 
     def get_is_number_pairs(self):
         """
-            Extract out of text all tags
-                return all tags with index of appearance
+            Extract out of text all words that include number
+                return all relevant tags with index of appearance
         """
         with open(self.file_path) as f:
             for line in f:
@@ -659,8 +660,8 @@ class feature2id_class():
 
     def get_is_capital_pairs(self):
         """
-            Extract out of text all tags
-                return all tags with index of appearance
+            Extract out of text all words that include capital letter
+                return all relevant tags with index of appearance
         """
         with open(self.file_path) as f:
             for line in f:
@@ -763,8 +764,8 @@ class feature2id_class():
 
     def get_is_hyphen_pairs(self):
         """
-            Extract out of text all tags
-                return all tags with index of appearance
+            Extract out of text all words that include hyphen(-)
+                return all relevant tags with index of appearance
         """
         with open(self.file_path) as f:
             for line in f:
@@ -781,8 +782,8 @@ class feature2id_class():
 
     def get_is_company_pairs(self):
         """
-            Extract out of text all tags
-                return all tags with index of appearance
+            Extract out of text all words that include capitalized word followed by Inc. or Co.
+                return all relevant tags with index of appearance
         """
         with open(self.file_path) as f:
             for line in f:
@@ -816,8 +817,8 @@ class feature2id_class():
 
     def get_is_allcaps_pairs(self):
         """
-            Extract out of text all tags
-                return all tags with index of appearance
+            Extract out of text all words that include only capital letter
+                return all relevant tags with index of appearance
         """
         with open(self.file_path) as f:
             for line in f:
@@ -834,8 +835,8 @@ class feature2id_class():
 
     def get_is_capitalized_number_dash_pairs(self):
         """
-            Extract out of text all tags
-                return all tags with index of appearance
+            Extract out of text all words that include only capital letters,digits and dashes
+                return all relevant tags with index of appearance
         """
         with open(self.file_path) as f:
             for line in f:
@@ -855,8 +856,8 @@ class feature2id_class():
 
     def get_is_numberlike_pairs(self):
         """
-            Extract out of text all tags
-                return all tags with index of appearance
+            Extract out of text all words that are numberlike
+                return all relevant tags with index of appearance
         """
         numberlike = ["two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "tens" \
             , "eleven", "twelve", "hundred", "hundreds", "thousand", "thousands"]
@@ -902,7 +903,6 @@ This is done at training step.
 ### History tuple
 We define a tuple which hold all relevant knowledge about the current word, i.e. all that is relevant to extract features for this token.
 
-$$History = (W_{cur}, T_{prev}, T_{next}, T_{cur}, W_{prev}, W_{next}) $$
 """
 
 
@@ -910,7 +910,7 @@ def represent_input_with_features(history, feature2id):
     """
         Extract feature vector in per a given history
         :param history: touple{word, pptag, ptag, ctag, nword, pword, pptag, ppword, nnword, nnnword}
-        :param word_tags_dict: word\tag dict
+        :param feature2if: dictionary of all feature's indices
             Return a list with all features that are relevant to the given history
     """
     word = history[0]
