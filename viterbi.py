@@ -157,7 +157,7 @@ class Viterbi():
         predictions = []
         real_tags = []
         sentence = []
-        result_path = 'tagged_'+file_path
+        result_path = 'tagged_' + file_path+ '.wtag'
 
         with open(result_path, 'w') as f:
             f.write('')
