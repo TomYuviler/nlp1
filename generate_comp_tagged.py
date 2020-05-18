@@ -39,12 +39,12 @@ def generate_tagged_comp():
     print("Tagging comp1...")
     viterbi_1.viterbi_that_file('comp1.words')
 
-    # with open('OpTyTagger20200517-215723.pkl', 'rb') as pickle_file:
-    #     model_b = pickle.load(pickle_file)
-    # print("Running Viterbi")
-    # viterbi_1 = viterbi.Viterbi(model_b)
-    # print("Tagging comp2...")
-    # viterbi_1.viterbi_that_file('comp2.words')
+    with open('OpTyTagger20200517-215723.pkl', 'rb') as pickle_file:
+        model_b = pickle.load(pickle_file)
+    print("Running Viterbi")
+    viterbi_1 = viterbi.Viterbi(model_b)
+    print("Tagging comp2...")
+    viterbi_1.viterbi_that_file('comp2.words')
 
 
 if __name__ == '__main__':
