@@ -3,7 +3,7 @@ import nlp1
 import re
 import math
 from CrossValidation import get_num_of_sentences
-
+import tools
 
 class Viterbi():
     """ A Viterbi algorithm implementation for the inference of the OpTy MEMM tagger.
@@ -101,7 +101,7 @@ class Viterbi():
 
         return float(num_of_correct)/n
 
-    def run_viterbi(self, sentence, beam_size=5, active_beam=False):
+    def viterbi_that_sentence(self, sentence, beam_size=5, active_beam=False):
         """
         Arg:
             sentence (string): The requested sentence to tag.
@@ -111,33 +111,36 @@ class Viterbi():
         Return:
             list of the predicted tags for the current sentence.
         """
-        n = len(sentence) + 2
-        pi = np.full((n, self.num_of_tags ** 2), -np.inf)
-        bp = np.zeros((n, self.num_of_tags ** 2))
-        pi[1, self.tags_pair_pos[('*', '*')]] = 1
-        predicted_tags = ['*' for word in range(n)]
+        num_of_words = len(sentence) + 2
+        predicted_tags = ['*' for word in range(num_of_words)]
 
-        for k in range(2, n):
+        pi_table = np.full((num_of_words, self.num_of_tags ** 2), -np.inf)
+        bp_table = np.zeros((num_of_words, self.num_of_tags ** 2))
+        pi_table[1, self.tags_pair_pos[('*', '*')]] = 1
+
+        for i in range(2, num_of_words):
             for u, v in self.tags_pairs:
-                values = np.full(len(self.tags_list), -np.inf)
-                for i, t in enumerate(self.tags_list):
-                    if pi[k-1, self.tags_pair_pos[(t, u)]] == -np.inf or v == '*':
-                        continue
-                    trigram_prob = self.get_tri_probability(v, t, u, sentence, k)
-                    values[i] = pi[k-1, self.tags_pair_pos[(t, u)]] * trigram_prob
 
-                max_pos = np.argmax(values)
-                pi[k, self.tags_pair_pos[(u, v)]] = values[max_pos]
-                bp[k, self.tags_pair_pos[(u, v)]] = max_pos
+                probs = np.full(len(self.tags_list), -np.inf)
+                for j, t in enumerate(self.tags_list):
+                    if pi_table[i-1, self.tags_pair_pos[(t, u)]] == -np.inf or v == '*':
+                        continue
+                    trigram_prob = self.get_tri_probability(v, t, u, sentence, i)
+                    probs[j] = pi_table[i-1, self.tags_pair_pos[(t, u)]] * trigram_prob
+
+                max_var = np.argmax(probs)
+                pi_table[i, self.tags_pair_pos[(u, v)]] = probs[max_var]
+                bp_table[i, self.tags_pair_pos[(u, v)]] = max_var
 
             if active_beam:
-                pi_k = pi[k, :]
-                threshold = pi_k[np.argpartition(pi_k, len(pi_k) - beam_size)[len(pi_k) - beam_size]]
-                pi[k, :] = np.where(pi_k >= threshold, pi_k, -np.inf)
+                partitioned = np.partition(pi_table[i, :], len(pi_table[i, :]) - beam_size)
+                pi_table[i, :] = np.where(pi_table[i, :] >= partitioned[len(pi_table[i, :]) - beam_size],
+                                          pi_table[i, :], -np.inf)
 
-        predicted_tags[n-2], predicted_tags[n-1] = self.tags_pairs[np.argmax(pi[n-1,:])]
-        for k in range(n-3, 0, -1):
-            predicted_tags[k] = self.tags_list[int(bp[k+2, self.tags_pair_pos[(predicted_tags[k+1], predicted_tags[k+2])]])]
+        predicted_tags[num_of_words-2], predicted_tags[num_of_words-1] = self.tags_pairs[np.argmax(pi_table[num_of_words-1,:])]
+        for i in range(num_of_words-3, 0, -1):
+            predicted_tags[i] = self.tags_list[int(bp_table[i+2, self.tags_pair_pos[(predicted_tags[i+1],
+                                                                                     predicted_tags[i+2])]])]
         return predicted_tags
 
     def viterbi_that_file(self, file_path, with_tags=False):
@@ -185,7 +188,7 @@ class Viterbi():
                     if with_tags:
                         real_tags.append(cur_tag)
 
-                pred_tags = self.run_viterbi(sentence, active_beam=True, beam_size=5)[2:]
+                pred_tags = self.viterbi_that_sentence(sentence, active_beam=True, beam_size=5)[2:]
 
                 with open(result_path, 'a') as f:
                     curr_line = ""
@@ -200,7 +203,15 @@ class Viterbi():
                     predictions.append(prediction)
                 sentence = []
 
-
+        tool = tools.SummeryTools(self.tags_list, real_tags, predictions, self.all_words)
+        tool.get_confusion_matrix()
+        tool.get_top10_confusion_matrix()
+        print("------------")
+        print("------------")
+        print(tool.get_most_common_mistakes_per_words())
+        print("------------")
+        print("------------")
+        print(tool.get_most_common_mistakes_per_tag())
         if with_tags:
             accuracy = self.get_accuracy(real_tags, predictions)
             return accuracy

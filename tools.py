@@ -64,7 +64,8 @@ class SummeryTools:
         return pd.DataFrame.copy(self.confusion_matrix)
 
     def get_top10_confusion_matrix(self):
-        """ Return a confusion matrix of the top 10 most mistakable true tags."""
+        """ Return a confusion matrix of the top 10 most mistakable true tags.
+            Must call 'get_confusion_matrix' before."""
 
         confusion_matrix = pd.DataFrame.copy(self.confusion_matrix)
 
@@ -76,11 +77,14 @@ class SummeryTools:
 
         plt.figure(figsize=(20, 20))
         ax = sn.heatmap(confusion_matrix, annot=True, annot_kws={"size": 20})
-        ax.set_xlabel("Predicted Tags", fontsize=25)
-        ax.set_ylabel("Real Tags", fontsize=25)
-        ax.set_title("Top 10 most mistakable tags confusion matrix", fontsize=25)
+        plt.yticks(size=22)
+        plt.xticks(size=13, rotation=55)
+
+        ax.set_xlabel("Predicted Tags", fontsize=30)
+        ax.set_ylabel("Real Tags", fontsize=30)
+        ax.set_title("Top 10 most mistakable tags confusion matrix", fontsize=40)
         bottom, top = ax.get_ylim()
-        ax.set_ylim(bottom + 1, top - 1)
+        ax.set_ylim(bottom + 0.2, top - 0.2)
         plt.savefig('confusion_matrix_1')
 
         return confusion_matrix

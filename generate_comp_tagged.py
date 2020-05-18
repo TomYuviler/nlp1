@@ -32,19 +32,19 @@ def strip_tagged_file(file_path):
 def generate_tagged_comp():
     """Generates the tagged competition files."""
 
-    #with open('OpTyTagger20200517-102947.pkl', 'rb') as pickle_file:
-    #    model_a = pickle.load(pickle_file)
-    #print("Running Viterbi")
-    #viterbi_1 = viterbi.Viterbi(model_a)
-    #print("Tagging comp1...")
-    #viterbi_1.viterbi_that_file('comp1.words')
-
-    with open('OpTyTagger20200517-215723.pkl', 'rb') as pickle_file:
-        model_b = pickle.load(pickle_file)
+    with open('OpTyTagger20200517-102947.pkl', 'rb') as pickle_file:
+       model_a = pickle.load(pickle_file)
     print("Running Viterbi")
-    viterbi_1 = viterbi.Viterbi(model_b)
-    print("Tagging comp2...")
-    viterbi_1.viterbi_that_file('comp2.words')
+    viterbi_1 = viterbi.Viterbi(model_a)
+    print("Tagging comp1...")
+    viterbi_1.viterbi_that_file('comp1.words')
+
+    # with open('OpTyTagger20200517-215723.pkl', 'rb') as pickle_file:
+    #     model_b = pickle.load(pickle_file)
+    # print("Running Viterbi")
+    # viterbi_1 = viterbi.Viterbi(model_b)
+    # print("Tagging comp2...")
+    # viterbi_1.viterbi_that_file('comp2.words')
 
 
 if __name__ == '__main__':

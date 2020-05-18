@@ -1233,7 +1233,7 @@ class OpTyTagger:
         self.weights = self.optimal_params[0]
 
 
-def main(mode='train', file_path='train1.wtag', _with_tags=True):
+def main(mode='inference', file_path='check.words', _with_tags=True):
 
     if mode == 'train':
         model_a = OpTyTagger(file_path)
@@ -1241,8 +1241,8 @@ def main(mode='train', file_path='train1.wtag', _with_tags=True):
         with open('OpTyTagger{}.pkl'.format(date_time), 'wb') as pickle_file:
             pickle.dump(model_a, pickle_file)
 
-    if mode == 'test':
-        with open('OpTyTagger20200517-102947.pkl', 'rb') as pickle_file:
+    if mode == 'inference':
+        with open('model1.pkl', 'rb') as pickle_file:
             model_a = pickle.load(pickle_file)
         print("Running Viterbi")
         viterbi_1 = viterbi.Viterbi(model_a)
@@ -1261,8 +1261,13 @@ def main(mode='train', file_path='train1.wtag', _with_tags=True):
 
 if __name__ == '__main__':
 
+
     if len(sys.argv) == 4:
         mode, file_path, _with_tags = sys.argv[1:]
+        if _with_tags == 'True':
+            _with_tags = True
+        else:
+            _with_tags = False
         start = time.time()
         main(mode, file_path, _with_tags)
         end = time.time()
