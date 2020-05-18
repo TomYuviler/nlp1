@@ -1233,7 +1233,7 @@ class OpTyTagger:
         self.weights = self.optimal_params[0]
 
 
-def main(mode='inference', file_path='check.words', _with_tags=True):
+def main(mode='inference', file_path='test1.wtag', _with_tags=True):
 
     if mode == 'train':
         model_a = OpTyTagger(file_path)
