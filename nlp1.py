@@ -78,7 +78,7 @@ class feature_statistics_class():
     def get_word_tag_pair_count(self):
         """
             Extract out of text all word/tag pairs
-                return all word/tag pairs with index of appearance
+                return all word/tag pairs "check"
         """
         with open(self.file_path) as f:
             for line in f:
