@@ -1273,11 +1273,11 @@ if __name__ == '__main__':
         end = time.time()
         print("It took {} seconds for the model to run in {} mode on {}".format(end-start, mode, file_path))
         if mode != 'train':
-            print("You can find the results in the 'result.wtag' file.")
+            print("You can find the results in the 'tagged_file_path.wtag' file.")
     else:
         start = time.time()
         main()
         end = time.time()
-        print("It took {} seconds for the model to run in train mode on train1.wtag".format(end-start))
+        print("It took {} seconds for the model to run in inference mode on test1.wtag".format(end-start))
 
 
