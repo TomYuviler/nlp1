@@ -15,8 +15,9 @@ class Viterbi():
             model (OpTyTagger Object):
     """
 
-    def __init__(self, model):
+    def __init__(self, model, mode):
         self.model = model
+        self.mode = mode
         self.tags_list = ['*'] + model.tags_list
         self.num_of_tags = len(self.tags_list)
         self.tags_pairs = [(x, y) for x in self.tags_list for y in self.tags_list]
@@ -205,15 +206,16 @@ class Viterbi():
 
 
         if with_tags:
-            tool = tools.SummeryTools(self.tags_list, real_tags, predictions, self.all_words)
-            tool.get_confusion_matrix()
-            tool.get_top10_confusion_matrix()
-            print("------------")
-            print("------------")
-            print(tool.get_most_common_mistakes_per_words())
-            print("------------")
-            print("------------")
-            print(tool.get_most_common_mistakes_per_tag())
+            if self.mode != 'cross_val':
+                tool = tools.SummeryTools(self.tags_list, real_tags, predictions, self.all_words)
+                tool.get_confusion_matrix()
+                tool.get_top10_confusion_matrix()
+                print("------------")
+                print("------------")
+                print(tool.get_most_common_mistakes_per_words())
+                print("------------")
+                print("------------")
+                print(tool.get_most_common_mistakes_per_tag())
             accuracy = self.get_accuracy(real_tags, predictions)
             return accuracy
 

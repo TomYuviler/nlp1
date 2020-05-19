@@ -30,7 +30,7 @@ def k_fold(file_path, k):
                     if i == num_of_sentences:
                         train_file.writelines(data[:-block_size])
                     else:
-                        train_file.writelines(data[:i-block_size] + data[i + block_size:])
+                        train_file.writelines(data[:i-block_size] + data[i:])
             with open('test.wtag', 'w') as test_file:
                 test_file.writelines(data[i - block_size:i])
 

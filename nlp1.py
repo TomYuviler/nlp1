@@ -1245,7 +1245,7 @@ def main(mode='inference', file_path='test1.wtag', _with_tags=True):
         with open('model1.pkl', 'rb') as pickle_file:
             model_a = pickle.load(pickle_file)
         print("Running Viterbi")
-        viterbi_1 = viterbi.Viterbi(model_a)
+        viterbi_1 = viterbi.Viterbi(model_a, mode)
         accuracy = viterbi_1.viterbi_that_file(file_path, with_tags=_with_tags)
         if _with_tags:
             print("The accuracy is:", accuracy)
@@ -1255,7 +1255,7 @@ def main(mode='inference', file_path='test1.wtag', _with_tags=True):
         for fold in CrossValidation.k_fold(file_path, 10):
             model_a = OpTyTagger('train.wtag')
             model_a.fit()
-            viterbi_1 = viterbi.Viterbi(model_a)
+            viterbi_1 = viterbi.Viterbi(model_a, mode)
             acc.append(viterbi_1.viterbi_that_file('test.wtag', True))
         print("The average accuracy is:", sum(acc)/len(acc))
 
